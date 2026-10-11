@@ -1,0 +1,2181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Carnival Math Trail - Interactive Probability Arcade</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        maroon: {
+                            950: '#200208',
+                            900: '#3A040E',
+                            800: '#580B1E',
+                            700: '#7A0C26',
+                            600: '#9B1130',
+                            500: '#BD1B3C'
+                        },
+                        carnival: {
+                            gold: '#F59E0B',
+                            yellow: '#FCD34D',
+                            cream: '#FFF8E7',
+                            card: '#4A0818',
+                            accent: '#E11D48',
+                            purple: '#8B5CF6',
+                            cyan: '#06B6D4'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Georgia', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #200208;
+            color: #FFF8E7;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            touch-action: manipulation;
+        }
+        .carnival-border {
+            border: 4px solid #FCD34D;
+            box-shadow: 0 0 20px rgba(252, 211, 77, 0.35);
+        }
+        .game-canvas {
+            touch-action: none;
+            background: radial-gradient(circle, #580B1E 0%, #200208 100%);
+            cursor: crosshair;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #200208;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #9B1130;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #F59E0B;
+        }
+        /* Printable Certificate */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printable-certificate-container, #printable-certificate-container * {
+                visibility: visible;
+            }
+            #printable-certificate-container {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 15px rgba(245, 158, 11, 0.4); }
+            50% { box-shadow: 0 0 25px rgba(245, 158, 11, 0.8); }
+        }
+        .glow-active {
+            animation: pulse-glow 2s infinite;
+        }
+    </style>
+
+<style>
+html{scroll-behavior:smooth}
+body{background:radial-gradient(ellipse at 50% 0%,#66102d 0%,#200208 55%,#120106 100%) fixed}
+body:before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background-image:radial-gradient(#fcd34d88 1px,transparent 2px);background-size:48px 48px;opacity:.13}
+.carnival-sky{position:relative;overflow:hidden;border:2px solid #f59e0b;border-radius:24px;background:linear-gradient(145deg,#4a0818,#7a0c26 50%,#280514);box-shadow:0 15px 45px #0007}
+.carnival-sky:before{content:"✦  ✧    ✦    ✧   ✦     ✧    ✦";position:absolute;top:12px;left:0;right:0;text-align:center;letter-spacing:15px;color:#fcd34d77;animation:twinkle 2s ease-in-out infinite alternate}
+@keyframes twinkle{from{opacity:.25}to{opacity:1}}
+@keyframes mascotFloat{0%,100%{transform:translateY(0) rotate(-5deg)}50%{transform:translateY(-11px) rotate(5deg)}}
+@keyframes shine{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.mascot{animation:mascotFloat 3s ease-in-out infinite;filter:drop-shadow(0 8px 8px #0008)}
+.xp-track{height:13px;border-radius:99px;background:#200208;overflow:hidden;border:1px solid #fcd34d7a}
+.xp-fill{height:100%;width:0%;border-radius:99px;background:linear-gradient(90deg,#e11d48,#f59e0b,#fcd34d);transition:width .6s}
+.level-badge{background:linear-gradient(135deg,#fcd34d,#f59e0b);color:#380512;border-radius:999px;padding:5px 12px;font-weight:900}
+.quest-card{background:#2f0613bb;border:1px solid #b45309;border-radius:16px;padding:12px}
+.quest-done{border-color:#10b981;background:#064e3b66}
+#leaderboard-table td,#leaderboard-table th{padding:12px;border-bottom:1px solid #7a0c26;text-align:left}
+#leaderboard-table th{color:#fcd34d}
+.arcade-control{background:#f59e0b;color:#320612;font-weight:850;padding:9px 15px;border-radius:12px}
+.arcade-control:hover{background:#fde68a}
+body.focus-mode header{position:relative}
+body.focus-mode main{max-width:1600px}
+body.focus-mode #booth-arena{min-height:72vh}
+</style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-carnival-gold selection:text-maroon-900">
+
+    <header class="bg-maroon-900 border-b-2 border-carnival-gold sticky top-0 z-40 shadow-xl no-print">
+        <div class="max-w-7xl mx-auto px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-full bg-carnival-gold flex items-center justify-center text-maroon-900 font-bold text-xl shadow-md transform hover:rotate-12 transition-transform">
+                    🎪
+                </div>
+                <div>
+                    <h1 class="text-lg sm:text-xl font-black text-carnival-yellow tracking-wide font-serif uppercase">Carnival Probability Arcade</h1>
+                    <p class="text-[11px] text-rose-200">Interactive Mini-Games & Qualitative Likelihood Codex</p>
+                </div>
+            </div>
+
+            <!-- Arcade Navigation Tabs -->
+            <nav class="flex items-center space-x-1 sm:space-x-2 bg-maroon-950/80 p-1 rounded-xl border border-maroon-700">
+                <button id="nav-hub" onclick="switchTab('hub')" class="tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-carnival-gold text-maroon-900 shadow">
+                    <i class="fa-solid fa-gamepad mr-1.5"></i>Arcade
+                </button>
+                <button id="nav-analytics" onclick="switchTab('analytics')" class="tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-200 hover:text-white hover:bg-maroon-800 transition-all">
+                    <i class="fa-solid fa-chart-pie mr-1.5"></i>Data Dashboard
+                </button>
+                <button id="nav-shop" onclick="switchTab('shop')" class="tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-200 hover:text-white hover:bg-maroon-800 transition-all">
+                    <i class="fa-solid fa-store mr-1.5"></i>Prize Shop
+                </button>
+                <button id="nav-codex" onclick="switchTab('codex')" class="tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-200 hover:text-white hover:bg-maroon-800 transition-all">
+                    <i class="fa-solid fa-wand-magic-sparkles mr-1.5"></i>AI Codex
+                </button>
+                <button id="nav-guide" onclick="switchTab('guide')" class="tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-200 hover:text-white hover:bg-maroon-800 transition-all">
+                    <i class="fa-solid fa-book-open mr-1.5"></i>Guide
+                </button>
+            </nav>
+
+            <!-- Economy Bar (Tickets & Sound) -->
+            <div class="flex items-center space-x-2">
+                <div class="bg-maroon-950 px-3 py-1.5 rounded-xl border border-carnival-gold flex items-center space-x-2 shadow-inner">
+                    <span class="text-lg">🎟️</span>
+                    <div>
+                        <div class="text-[9px] uppercase text-rose-300 font-bold leading-none">Tickets</div>
+                        <div id="ticket-display" class="text-sm font-black text-carnival-yellow font-mono">0</div>
+                    </div>
+                </div>
+                <button onclick="toggleAudioMute()" id="audio-toggle-btn" class="p-2.5 rounded-xl bg-maroon-800 hover:bg-maroon-700 text-carnival-yellow border border-maroon-600 transition text-xs" title="Toggle Audio">
+                    <i id="audio-icon" class="fa-solid fa-volume-high"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-5 w-full flex-grow no-print">
+
+        <!-- TAB 1: CARNIVAL ARCADE & MINI-GAMES -->
+        <section id="tab-hub" class="space-y-5">
+            
+<div id="enhanced-hero" class="carnival-sky p-5 sm:p-7 mb-5">
+ <div class="relative z-10 grid grid-cols-1 md:grid-cols-[auto_1fr_auto] items-center gap-5">
+  <div class="mascot text-7xl text-center" role="img" aria-label="Friendly ringmaster mascot">🎩🎪</div>
+  <div>
+   <div class="uppercase text-xs tracking-[.2em] text-amber-300 font-black">The Grand Math Carnival · Classroom Edition</div>
+   <h2 class="font-serif font-black text-3xl sm:text-4xl text-amber-200 mt-1">The Probability Quest</h2>
+   <p class="text-rose-100 text-sm mt-2">Predict the odds. Play the booths. Earn stars. Become a Carnival Legend!</p>
+   <div class="mt-3 flex flex-wrap gap-2 items-center">
+    <label class="text-xs text-amber-200 font-bold" for="arcade-player">Player:</label>
+    <input id="arcade-player" maxlength="26" aria-label="Player nickname" placeholder="Your nickname" class="bg-maroon-950 border border-yellow-600 rounded-lg text-white px-3 py-2 text-sm w-44" />
+    <button class="arcade-control text-xs" onclick="arcadeSavePlayer()">Save Player</button>
+    <button class="arcade-control text-xs" onclick="arcadeFullscreen()">⛶ Full screen</button>
+   </div>
+  </div>
+  <div class="bg-black/30 p-4 rounded-2xl border border-amber-500/50 min-w-[195px]">
+   <div id="arcade-level" class="level-badge inline-block text-sm">LEVEL 1</div>
+   <div id="arcade-rank" class="text-amber-200 text-sm font-bold mt-2">Curious Explorer</div>
+   <div class="xp-track mt-2"><div id="arcade-xp-bar" class="xp-fill"></div></div>
+   <div id="arcade-xp-label" class="text-amber-100 text-xs mt-1">0 / 100 XP</div>
+   <div id="arcade-stars" class="mt-2 text-xs text-amber-200 font-bold">⭐ 0 Stars</div>
+  </div>
+ </div>
+ <div class="relative z-10 mt-5 grid grid-cols-2 lg:grid-cols-4 gap-2" id="quest-cards"></div>
+</div>
+
+            <!-- Welcome Banner -->
+            <div class="bg-gradient-to-r from-maroon-900 via-maroon-800 to-maroon-900 p-5 rounded-2xl carnival-border relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="z-10 max-w-2xl text-center md:text-left">
+                    <span class="bg-carnival-gold/20 text-carnival-yellow border border-carnival-gold/40 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider inline-block mb-1.5">
+                        Year 6 Interactive Math Lab
+                    </span>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-carnival-cream font-serif">Welcome to the Probability Arcade!</h2>
+                    <p class="text-rose-200 mt-1 text-xs sm:text-sm leading-relaxed">
+                        Read the situation statement, select your likelihood prediction, and launch into interactive physics mini-games to collect carnival tickets and earn your Award Certificate!
+                    </p>
+                </div>
+                <!-- Mini Stats Overview -->
+                <div class="flex flex-wrap gap-2 justify-center z-10">
+                    <div class="bg-maroon-950/80 px-3.5 py-2 rounded-xl border border-maroon-700 text-center min-w-[90px]">
+                        <div id="stat-total-trials" class="text-xl font-black text-carnival-yellow">0</div>
+                        <div class="text-[9px] text-rose-300 uppercase font-bold">Total Trials</div>
+                    </div>
+                    <div class="bg-maroon-950/80 px-3.5 py-2 rounded-xl border border-maroon-700 text-center min-w-[90px]">
+                        <div id="stat-booths-visited" class="text-xl font-black text-carnival-yellow">0 / 4</div>
+                        <div class="text-[9px] text-rose-300 uppercase font-bold">Booths Done</div>
+                    </div>
+                    <div class="bg-maroon-950/80 px-3.5 py-2 rounded-xl border border-maroon-700 text-center min-w-[90px]">
+                        <div id="stat-prizes-unlocked" class="text-xl font-black text-emerald-400">0</div>
+                        <div class="text-[9px] text-rose-300 uppercase font-bold">Prizes Won</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Likelihood Scale Banner -->
+            <div class="bg-maroon-900/90 border border-maroon-700 p-3 rounded-xl flex flex-wrap items-center justify-between gap-2 text-xs">
+                <span class="font-bold text-carnival-yellow uppercase tracking-wider text-[11px]"><i class="fa-solid fa-palette mr-1.5"></i>5 Qualitative Likelihood Levels:</span>
+                <div class="flex flex-wrap items-center gap-1.5">
+                    <span class="px-2.5 py-0.5 rounded-full font-bold bg-slate-800 text-slate-300 border border-slate-600">Impossible (0)</span>
+                    <span class="px-2.5 py-0.5 rounded-full font-bold bg-amber-950 text-amber-300 border border-amber-600">Less Likely (&lt;0.5)</span>
+                    <span class="px-2.5 py-0.5 rounded-full font-bold bg-sky-950 text-sky-300 border border-sky-600">Equally Likely (=0.5)</span>
+                    <span class="px-2.5 py-0.5 rounded-full font-bold bg-emerald-950 text-emerald-300 border border-emerald-600">More Likely (&gt;0.5)</span>
+                    <span class="px-2.5 py-0.5 rounded-full font-bold bg-purple-950 text-purple-300 border border-purple-600">Certain (1.0)</span>
+                </div>
+            </div>
+
+            <!-- Booth Selector Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Booth 1: Spin Wheel -->
+                <div onclick="openBooth('spinner')" class="group cursor-pointer bg-maroon-800 hover:bg-maroon-700 p-4 rounded-xl border-2 border-rose-900 hover:border-carnival-gold transition-all duration-300 shadow-lg flex flex-col items-center text-center glow-active">
+                    <div class="w-16 h-16 rounded-full bg-rose-900/60 border border-rose-500/30 flex items-center justify-center text-3xl mb-2 group-hover:scale-110 transition-transform shadow-inner">
+                        🎡
+                    </div>
+                    <h3 class="font-bold text-carnival-yellow text-base mb-1">Spin to Win</h3>
+                    <p class="text-xs text-rose-200 mb-3">15 Interactive Spins • Win Sector Target</p>
+                    <span class="mt-auto px-4 py-1.5 bg-carnival-gold text-maroon-900 text-xs font-extrabold rounded-lg shadow group-hover:bg-yellow-300 transition">PLAY GAME</span>
+                </div>
+
+                <!-- Booth 2: Hit Cans -->
+                <div onclick="openBooth('cans')" class="group cursor-pointer bg-maroon-800 hover:bg-maroon-700 p-4 rounded-xl border-2 border-rose-900 hover:border-carnival-gold transition-all duration-300 shadow-lg flex flex-col items-center text-center">
+                    <div class="w-16 h-16 rounded-full bg-rose-900/60 border border-rose-500/30 flex items-center justify-center text-3xl mb-2 group-hover:scale-110 transition-transform shadow-inner">
+                        🎯
+                    </div>
+                    <h3 class="font-bold text-carnival-yellow text-base mb-1">Can Knockdown</h3>
+                    <p class="text-xs text-rose-200 mb-3">8 Drag Throws • Physics Aiming</p>
+                    <span class="mt-auto px-4 py-1.5 bg-carnival-gold text-maroon-900 text-xs font-extrabold rounded-lg shadow group-hover:bg-yellow-300 transition">PLAY GAME</span>
+                </div>
+
+                <!-- Booth 3: Basketball Hoops -->
+                <div onclick="openBooth('basketball')" class="group cursor-pointer bg-maroon-800 hover:bg-maroon-700 p-4 rounded-xl border-2 border-rose-900 hover:border-carnival-gold transition-all duration-300 shadow-lg flex flex-col items-center text-center">
+                    <div class="w-16 h-16 rounded-full bg-rose-900/60 border border-rose-500/30 flex items-center justify-center text-3xl mb-2 group-hover:scale-110 transition-transform shadow-inner">
+                        🏀
+                    </div>
+                    <h3 class="font-bold text-carnival-yellow text-base mb-1">Basketball Shootout</h3>
+                    <p class="text-xs text-rose-200 mb-3">12 Shots • Arc & Timing Control</p>
+                    <span class="mt-auto px-4 py-1.5 bg-carnival-gold text-maroon-900 text-xs font-extrabold rounded-lg shadow group-hover:bg-yellow-300 transition">PLAY GAME</span>
+                </div>
+
+                <!-- Booth 4: Ring Toss -->
+                <div onclick="openBooth('ring')" class="group cursor-pointer bg-maroon-800 hover:bg-maroon-700 p-4 rounded-xl border-2 border-rose-900 hover:border-carnival-gold transition-all duration-300 shadow-lg flex flex-col items-center text-center">
+                    <div class="w-16 h-16 rounded-full bg-rose-900/60 border border-rose-500/30 flex items-center justify-center text-3xl mb-2 group-hover:scale-110 transition-transform shadow-inner">
+                        ⭕
+                    </div>
+                    <h3 class="font-bold text-carnival-yellow text-base mb-1">Ring-a-Bottle</h3>
+                    <p class="text-xs text-rose-200 mb-3">30 Ring Tosses • Aim Reticle & Wind</p>
+                    <span class="mt-auto px-4 py-1.5 bg-carnival-gold text-maroon-900 text-xs font-extrabold rounded-lg shadow group-hover:bg-yellow-300 transition">PLAY GAME</span>
+                </div>
+            </div>
+
+            <!-- Active Game Booth Stage -->
+            <div id="booth-arena" class="hidden bg-maroon-900/95 rounded-2xl border-4 border-carnival-gold p-4 sm:p-6 shadow-2xl relative">
+                <button onclick="closeBooth()" class="absolute top-4 right-4 bg-maroon-950 hover:bg-rose-900 text-rose-200 px-3 py-1.5 rounded-lg border border-rose-700 text-xs font-bold transition z-30">
+                    <i class="fa-solid fa-xmark mr-1"></i> Exit Booth
+                </button>
+
+                <div id="booth-content-area">
+                    <!-- Dynamic mini-game rendered via JS -->
+                </div>
+            </div>
+        </section>
+
+        
+<section id="tab-leaderboard" class="hidden space-y-4">
+ <div class="rounded-2xl bg-maroon-800 border-2 border-amber-500 p-5 sm:p-7">
+  <h2 class="font-serif font-black text-2xl text-amber-200">🏅 Hall of Carnival Legends</h2>
+  <p class="text-rose-200 text-sm mt-2">Finish trials to climb the rankings. Leaderboard entries are saved only in this browser on this device.</p>
+  <div class="flex flex-wrap items-center gap-3 mt-4">
+   <button onclick="arcadeRecordScore()" class="arcade-control">🏆 Add my score to leaderboard</button>
+   <button onclick="arcadeClearScores()" class="rounded-xl border border-rose-400 px-4 py-2 text-sm hover:bg-rose-900">Clear leaderboard</button>
+  </div>
+  <div class="overflow-x-auto mt-5"><table class="w-full text-sm" id="leaderboard-table"><thead><tr><th>Rank</th><th>Player</th><th>XP</th><th>Stars</th><th>Completed Booths</th><th>Date</th></tr></thead><tbody id="leaderboard-rows"></tbody></table></div>
+ </div>
+ <div class="rounded-2xl bg-maroon-900 border border-maroon-700 p-5">
+  <h3 class="font-black text-amber-300 text-lg">✨ Achievement Showcase</h3>
+  <div id="achievement-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-4"></div>
+ </div>
+</section>
+
+        <section id="tab-analytics" class="hidden space-y-5">
+            <div class="bg-maroon-800 p-6 rounded-2xl border border-maroon-700 shadow-xl">
+                <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-carnival-yellow font-serif"><i class="fa-solid fa-calculator mr-2"></i>Experimental Probability vs Prediction Ledger</h2>
+                        <p class="text-rose-200 text-xs mt-1">Review live trial data and compare qualitative expectations against real experimental frequencies.</p>
+                    </div>
+                    <button onclick="resetAllTrials()" class="px-4 py-2 bg-rose-900 hover:bg-rose-800 text-white rounded-xl text-xs font-bold border border-rose-600 transition shadow">
+                        <i class="fa-solid fa-rotate-right mr-1.5"></i>Reset All Data
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-maroon-950 text-carnival-yellow border-b border-maroon-700 text-xs uppercase tracking-wider">
+                                <th class="p-3">Carnival Booth</th>
+                                <th class="p-3">Target Event</th>
+                                <th class="p-3">Target Hits</th>
+                                <th class="p-3">Trials Done</th>
+                                <th class="p-3">Your Prediction</th>
+                                <th class="p-3">Experimental Likelihood</th>
+                                <th class="p-3">Analysis Outcome</th>
+                            </tr>
+                        </thead>
+                        <tbody id="analytics-table-body" class="divide-y divide-maroon-700 text-xs sm:text-sm">
+                            <!-- Populated dynamically via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-shop" class="hidden space-y-5">
+            <div class="bg-maroon-800 p-6 rounded-2xl border border-maroon-700 shadow-xl">
+                <div class="flex items-center justify-between border-b border-maroon-700 pb-4 mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-carnival-yellow font-serif"><i class="fa-solid fa-store mr-2"></i>Carnival Prize Shop</h2>
+                        <p class="text-rose-200 text-xs mt-1">Spend your earned carnival tickets to unlock awesome prizes and trophies!</p>
+                    </div>
+                    <div class="bg-maroon-950 px-4 py-2 rounded-xl border border-carnival-gold flex items-center space-x-2">
+                        <span class="text-xl">🎟️</span>
+                        <span id="shop-ticket-count" class="text-xl font-black text-carnival-yellow font-mono">0</span>
+                    </div>
+                </div>
+
+                <div id="prize-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-codex" class="hidden space-y-5">
+            <div class="bg-maroon-800 p-6 rounded-2xl border border-maroon-700 shadow-xl">
+                <div class="flex items-center space-x-3 mb-4">
+                    <div class="p-3 rounded-xl bg-carnival-gold/20 border border-carnival-gold text-carnival-yellow text-2xl">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-carnival-yellow font-serif">Probability Prompt Codex</h2>
+                        <p class="text-xs text-rose-200">Generate custom Year 6 probability worksheets and discussion tasks with AI.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Inputs -->
+                    <div class="bg-maroon-950/80 p-4 sm:p-5 rounded-xl border border-maroon-700 space-y-4">
+                        <h3 class="text-xs font-bold text-carnival-yellow uppercase tracking-wider">Codex Settings</h3>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-rose-200 mb-1">Target Grade Level</label>
+                            <select id="codex-grade" class="w-full bg-maroon-800 border border-maroon-600 rounded-lg p-2 text-xs text-carnival-cream focus:border-carnival-gold outline-none">
+                                <option value="Year 6 (Qualitative Likelihood: Prediction vs Trial)">Year 6 (Qualitative Likelihood Focus)</option>
+                                <option value="Grade 7-8 (Experimental vs Theoretical Probability)">Grade 7-8 (Experimental vs Theoretical)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-rose-200 mb-1">Carnival Game Theme</label>
+                            <select id="codex-booth" class="w-full bg-maroon-800 border border-maroon-600 rounded-lg p-2 text-xs text-carnival-cream focus:border-carnival-gold outline-none">
+                                <option value="All Carnival Booths Mixed Trail">All Mini-Games Mixed</option>
+                                <option value="Spin to Win Wheel Likelihood">Wheel Spin Game</option>
+                                <option value="Hit the Target Cans Likelihood">Can Knockdown Game</option>
+                                <option value="Basketball Hoops Likelihood">Basketball Shootout Game</option>
+                                <option value="Ring-a-Bottle Likelihood">Ring Toss Game</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-rose-200 mb-1">Output Type</label>
+                            <select id="codex-format" class="w-full bg-maroon-800 border border-maroon-600 rounded-lg p-2 text-xs text-carnival-cream focus:border-carnival-gold outline-none">
+                                <option value="Worksheet testing the 5 Qualitative Likelihood options">5-Level Qualitative Worksheet</option>
+                                <option value="Classroom Discussion Prompts on Probability">Class Discussion Questions</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-rose-200 mb-1">Custom Context</label>
+                            <textarea id="codex-custom" rows="3" placeholder="e.g., Focus on comparing predictions with trial outcomes..." class="w-full bg-maroon-800 border border-maroon-600 rounded-lg p-2 text-xs text-carnival-cream focus:border-carnival-gold outline-none resize-none"></textarea>
+                        </div>
+
+                        <button onclick="generateCodexPrompt()" id="codex-generate-btn" class="w-full py-2.5 bg-carnival-gold hover:bg-yellow-400 text-maroon-900 font-extrabold rounded-xl text-xs transition shadow flex items-center justify-center">
+                            <i class="fa-solid fa-sparkles mr-2"></i>Generate Teaching Artifact
+                        </button>
+                    </div>
+
+                    <!-- Output Area -->
+                    <div class="lg:col-span-2 bg-maroon-950/80 p-5 rounded-xl border border-maroon-700 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-3 border-b border-maroon-700 pb-2">
+                                <span class="text-xs font-bold uppercase text-carnival-yellow">Generated Teaching Content</span>
+                                <button onclick="copyCodexOutput()" class="text-xs text-rose-300 hover:text-carnival-yellow transition flex items-center">
+                                    <i class="fa-solid fa-copy mr-1"></i> Copy Text
+                                </button>
+                            </div>
+
+                            <div id="codex-output-container" class="text-xs sm:text-sm text-rose-100 font-mono whitespace-pre-wrap max-h-[420px] overflow-y-auto p-3 bg-maroon-900/60 rounded-lg border border-maroon-800">
+                                Select options on the left and click "Generate Teaching Artifact".
+                            </div>
+                        </div>
+
+                        <div id="codex-status" class="hidden mt-3 p-2 bg-maroon-800 border border-maroon-600 rounded text-xs text-rose-300 flex items-center">
+                            <i class="fa-solid fa-spinner fa-spin mr-2 text-carnival-gold"></i> Processing response...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-guide" class="hidden space-y-5">
+            <div class="bg-maroon-800 p-6 rounded-2xl border border-maroon-700 shadow-xl space-y-4">
+                <h2 class="text-2xl font-bold text-carnival-yellow font-serif"><i class="fa-solid fa-chalkboard-user mr-2"></i>Teacher Guide & Curriculum Mapping</h2>
+                <p class="text-rose-200 text-xs leading-relaxed">
+                    This interactive arcade allows students to formulate qualitative likelihood predictions prior to engaging in physical/simulated trial games.
+                </p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                    <div class="bg-maroon-950/80 p-4 rounded-xl border border-maroon-700 space-y-2">
+                        <h3 class="font-bold text-carnival-yellow uppercase">Key Learning Outcomes</h3>
+                        <ul class="list-disc list-inside space-y-1 text-rose-200">
+                            <li>Assign qualitative values (Impossible to Certain) to events.</li>
+                            <li>Compare initial predictions with experimental frequencies.</li>
+                            <li>Understand how sample sizes (trial counts) affect experimental outcomes.</li>
+                        </ul>
+                    </div>
+                    <div class="bg-maroon-950/80 p-4 rounded-xl border border-maroon-700 space-y-2">
+                        <h3 class="font-bold text-carnival-yellow uppercase">Classroom Instructions</h3>
+                        <ol class="list-decimal list-inside space-y-1 text-rose-200">
+                            <li>Pick a booth and read the Situation Statement.</li>
+                            <li>Select a Qualitative Prediction from the 5 scale buttons.</li>
+                            <li>Play the interactive game to execute required trial attempts.</li>
+                            <li>Review your certificate and analytical table!</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <div id="certificate-modal" class="hidden fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div id="printable-certificate-container" class="bg-gradient-to-br from-amber-50 via-white to-amber-100 text-slate-900 p-6 sm:p-8 rounded-3xl border-8 border-carnival-gold shadow-2xl max-w-2xl w-full relative my-auto">
+            
+            <div class="text-center border-b-2 border-amber-300 pb-3 mb-4">
+                <div class="inline-flex items-center justify-center space-x-2 text-amber-600 font-bold text-xs tracking-widest uppercase mb-1">
+                    <span>★ ★ ★</span>
+                    <span>Math Carnival Honors</span>
+                    <span>★ ★ ★</span>
+                </div>
+                <h2 id="cert-main-title" class="text-2xl sm:text-3xl font-black font-serif text-maroon-900 uppercase">Probability Master Award</h2>
+                <p id="cert-sub-title" class="text-[11px] font-bold text-amber-800 tracking-wider uppercase mt-1">Year 6 Qualitative Likelihood Experiment</p>
+            </div>
+
+            <div class="text-center my-3">
+                <p class="text-[11px] text-slate-500 uppercase font-bold tracking-wider">This certificate is awarded to</p>
+                <div class="mt-1 inline-block relative">
+                    <input type="text" id="cert-student-name" value="Probability Explorer" class="text-2xl font-black font-serif text-maroon-800 text-center bg-transparent border-b-2 border-dashed border-amber-500 focus:outline-none px-4 py-0.5" title="Click to edit name">
+                    <p class="text-[9px] text-amber-700 no-print mt-0.5"><i class="fa-solid fa-pen mr-1"></i>(Click to edit student name)</p>
+                </div>
+            </div>
+
+            <div id="cert-stats-box" class="my-4 p-3 rounded-2xl bg-amber-100/80 border border-amber-300 flex flex-wrap items-center justify-around gap-2 text-center text-xs">
+                <div>
+                    <span class="text-[10px] text-slate-500 uppercase block font-semibold">Game Booth</span>
+                    <span id="cert-booth-name" class="font-bold text-maroon-900">Spin Wheel</span>
+                </div>
+                <div>
+                    <span class="text-[10px] text-slate-500 uppercase block font-semibold">Your Prediction</span>
+                    <span id="cert-predicted-cat" class="font-bold text-amber-700">More Likely</span>
+                </div>
+                <div>
+                    <span class="text-[10px] text-slate-500 uppercase block font-semibold">Trial Outcome</span>
+                    <span id="cert-actual-cat" class="font-bold text-emerald-800">More Likely (8/15)</span>
+                </div>
+            </div>
+
+            <div class="my-4 p-3 rounded-xl text-center bg-white border border-amber-200 shadow-inner">
+                <div id="cert-status-badge" class="inline-block px-3 py-0.5 rounded-full text-xs font-extrabold uppercase mb-1">
+                    <!-- Dynamic Badge -->
+                </div>
+                <p id="cert-encouragement-text" class="text-xs text-slate-700 italic font-serif leading-relaxed">
+                    <!-- Dynamic Text -->
+                </p>
+            </div>
+
+            <div class="mt-6 flex justify-between items-end border-t border-amber-200 pt-3 text-xs">
+                <div class="text-center">
+                    <div class="font-serif font-bold text-maroon-900 text-xs">🎪 Arcade Master</div>
+                    <div class="text-[9px] text-slate-500">Carnival Math Trail</div>
+                </div>
+                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-amber-400 to-carnival-gold flex items-center justify-center text-maroon-900 font-bold text-xl shadow-md border-2 border-white">
+                    🎖️
+                </div>
+                <div class="text-center">
+                    <div class="font-serif font-bold text-maroon-900 text-xs">Year 6 Mathematics</div>
+                    <div class="text-[9px] text-slate-500">Probability Module</div>
+                </div>
+            </div>
+
+            <div class="mt-5 flex flex-wrap gap-2 justify-center no-print">
+                <button onclick="window.print()" class="px-4 py-2 bg-carnival-gold hover:bg-yellow-400 text-maroon-900 font-bold rounded-xl text-xs transition shadow flex items-center">
+                    <i class="fa-solid fa-print mr-1.5"></i> Print Certificate
+                </button>
+                <button onclick="retryCurrentBooth()" class="px-4 py-2 bg-maroon-800 hover:bg-maroon-700 text-white font-bold rounded-xl text-xs transition">
+                    <i class="fa-solid fa-rotate-left mr-1.5"></i> Replay Booth
+                </button>
+                <button onclick="closeCertificateModal()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-xl text-xs transition">
+                    Close
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Toast Floating Alert Box -->
+    <div id="toast-msg" class="fixed bottom-5 right-5 bg-maroon-900 border-2 border-carnival-gold text-carnival-cream px-4 py-3 rounded-xl shadow-2xl z-50 transition-all transform translate-y-20 opacity-0 flex items-center space-x-3 no-print">
+        <i id="toast-icon" class="fa-solid fa-circle-info text-carnival-yellow text-lg"></i>
+        <span id="toast-text" class="text-xs font-semibold">Message</span>
+    </div>
+
+    <footer class="bg-maroon-950 border-t border-maroon-800 py-2.5 text-center text-xs text-rose-300 no-print">
+        Carnival Math Trail • Year 6 Experimental Probability & Game Arcade
+    </footer>
+
+    <script>
+        /* WEB AUDIO SYNTHESIZER FOR SFX */
+        let audioCtx = null;
+        let isMuted = false;
+
+        function getAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        function toggleAudioMute() {
+            isMuted = !isMuted;
+            const icon = document.getElementById('audio-icon');
+            if (isMuted) {
+                icon.className = 'fa-solid fa-volume-xmark text-rose-400';
+                showToast('Audio Muted', 'info');
+            } else {
+                icon.className = 'fa-solid fa-volume-high text-carnival-yellow';
+                showToast('Audio Enabled', 'info');
+            }
+        }
+
+        function playSound(type) {
+            if (isMuted) return;
+            try {
+                const ctx = getAudioContext();
+                const now = ctx.currentTime;
+
+                if (type === 'tick') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(450, now);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.04);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.04);
+                } else if (type === 'swish') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(800, now);
+                    osc.frequency.exponentialRampToValueAtTime(200, now + 0.15);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.15);
+                } else if (type === 'hit') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(180, now);
+                    osc.frequency.exponentialRampToValueAtTime(60, now + 0.12);
+                    gain.gain.setValueAtTime(0.25, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.12);
+                } else if (type === 'win') {
+                    const notes = [440, 554.37, 659.25, 880];
+                    notes.forEach((freq, idx) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.frequency.setValueAtTime(freq, now + idx * 0.07);
+                        gain.gain.setValueAtTime(0.2, now + idx * 0.07);
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.07 + 0.18);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now + idx * 0.07);
+                        osc.stop(now + idx * 0.07 + 0.18);
+                    });
+                }
+            } catch (e) {}
+        }
+
+        /* STATE MANAGEMENT */
+        const state = {
+            tickets: 0,
+            activeBooth: null,
+            prizesUnlocked: [],
+            trials: {
+                spinner: { total: 0, required: 15, targetCount: 0, targetName: 'Win Sector Landed', predictedCategory: null, completed: false },
+                cans: { total: 0, required: 8, targetCount: 0, targetName: 'Can Stack Hit', predictedCategory: null, completed: false },
+                basketball: { total: 0, required: 12, targetCount: 0, targetName: 'Basket Swished', predictedCategory: null, completed: false },
+                ring: { total: 0, required: 30, targetCount: 0, targetName: 'Bottle Ringed', predictedCategory: null, completed: false }
+            }
+        };
+
+        const boothTitles = {
+            spinner: 'Spin to Win Wheel',
+            cans: 'Can Knockdown',
+            basketball: 'Basketball Shootout',
+            ring: 'Ring-a-Bottle'
+        };
+
+        const boothPrompts = {
+            spinner: {
+                title: "🎡 Situation: 8 Sector Wheel",
+                desc: "The wheel contains 3 WIN sectors and 5 LOSS sectors. Over 15 spins, what is the qualitative likelihood of landing on a WIN sector?"
+            },
+            cans: {
+                title: "🎯 Situation: Can Knockdown Aim",
+                desc: "You get 8 physical throws at a pyramid stack of cans. What is the qualitative likelihood of knocking down the cans?"
+            },
+            basketball: {
+                title: "🏀 Situation: Hoops Shot",
+                desc: "You will take 12 basketball shot attempts toward the basket hoop. What is the qualitative likelihood of scoring a basket?"
+            },
+            ring: {
+                title: "⭕ Situation: Bottle Ring Toss",
+                desc: "You have 30 rings to toss over bottle necks. What is the qualitative likelihood of ringing a bottle?"
+            }
+        };
+
+        const prizesCatalog = [
+            { id: 'teddy', name: 'Carnival Teddy Bear', cost: 30, emoji: '🧸' },
+            { id: 'hat', name: 'Ringmaster Hat', cost: 50, emoji: '🎩' },
+            { id: 'balloon', name: 'Festive Balloon Dog', cost: 20, emoji: '🎈' },
+            { id: 'trophy', name: 'Golden Math Trophy', cost: 100, emoji: '🏆' }
+        ];
+
+        /* QUALITATIVE CALCULATIONS */
+        function getLikelihoodBadge(targetCount, total) {
+            if (total === 0) return `<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-slate-800 text-slate-400 border border-slate-700">Not Tested</span>`;
+            const ratio = targetCount / total;
+            if (ratio === 0) return `<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-slate-800 text-slate-300 border border-slate-600">Impossible</span>`;
+            if (ratio < 0.5) return `<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-950 text-amber-300 border border-amber-600">Less Likely</span>`;
+            if (ratio === 0.5) return `<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-sky-950 text-sky-300 border border-sky-600">Equally Likely</span>`;
+            if (ratio < 1) return `<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-950 text-emerald-300 border border-emerald-600">More Likely</span>`;
+            return `<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-purple-950 text-purple-300 border border-purple-600">Certain</span>`;
+        }
+
+        function getLikelihoodName(targetCount, total) {
+            if (total === 0) return 'Not Tested Yet';
+            const ratio = targetCount / total;
+            if (ratio === 0) return 'Impossible';
+            if (ratio < 0.5) return 'Less Likely';
+            if (ratio === 0.5) return 'Equally Likely';
+            if (ratio < 1) return 'More Likely';
+            return 'Certain';
+        }
+
+        function renderPredictionSelector(boothKey) {
+            const data = state.trials[boothKey];
+            const promptInfo = boothPrompts[boothKey];
+            
+            const options = [
+                { name: 'Impossible', class: 'bg-slate-900 hover:bg-slate-800 text-slate-200 border-slate-700' },
+                { name: 'Less Likely', class: 'bg-amber-950 hover:bg-amber-900 text-amber-200 border-amber-700' },
+                { name: 'Equally Likely', class: 'bg-sky-950 hover:bg-sky-900 text-sky-200 border-sky-700' },
+                { name: 'More Likely', class: 'bg-emerald-950 hover:bg-emerald-900 text-emerald-200 border-emerald-700' },
+                { name: 'Certain', class: 'bg-purple-950 hover:bg-purple-900 text-purple-200 border-purple-700' }
+            ];
+
+            let buttonsHTML = options.map(opt => {
+                const isSelected = data.predictedCategory === opt.name;
+                const activeStyle = isSelected ? 'ring-4 ring-carnival-yellow font-black bg-carnival-gold text-maroon-950 scale-105' : 'opacity-85 hover:opacity-100';
+                return `
+                    <button onclick="setPredictionCategory('${boothKey}', '${opt.name}')" 
+                            class="px-3 py-1.5 rounded-xl border text-xs font-bold transition-all flex flex-col items-center justify-center ${opt.class} ${activeStyle}">
+                        <span>${opt.name}</span>
+                    </button>
+                `;
+            }).join('');
+
+            return `
+                <div class="p-3.5 bg-maroon-950/90 rounded-2xl border-2 border-carnival-gold/60 space-y-2 shadow-inner">
+                    <div class="text-center space-y-1">
+                        <span class="bg-carnival-gold text-maroon-900 font-black text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-wider inline-block">
+                            📌 STEP 1: PREDICTION
+                        </span>
+                        <div class="bg-maroon-900/80 p-2.5 rounded-xl border border-carnival-gold/30 text-left">
+                            <h4 class="text-xs font-bold text-carnival-yellow uppercase flex items-center">
+                                <i class="fa-solid fa-circle-question mr-1.5 text-carnival-gold"></i>${promptInfo.title}
+                            </h4>
+                            <p class="text-xs text-rose-100 mt-0.5">${promptInfo.desc}</p>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-1.5 justify-center py-1">
+                        ${buttonsHTML}
+                    </div>
+                    <div class="text-[11px] text-center font-bold text-carnival-yellow">
+                        ${data.predictedCategory ? `✅ Prediction Locked: <span class="text-carnival-cream underline">${data.predictedCategory}</span>. Now play the game!` : '⚠️ Select a qualitative prediction above to start playing!'}
+                    </div>
+                </div>
+            `;
+        }
+
+        function setPredictionCategory(boothKey, categoryName) {
+            state.trials[boothKey].predictedCategory = categoryName;
+            playSound('tick');
+            openBooth(boothKey);
+        }
+
+
+        /* --- MINI-GAME 1: SPIN TO WIN WHEEL --- */
+        let spinAngle = 0;
+        let isSpinning = false;
+
+        function renderSpinnerBooth(container) {
+            const data = state.trials.spinner;
+            const badge = getLikelihoodBadge(data.targetCount, data.total);
+            const isReady = !!data.predictedCategory;
+
+            container.innerHTML = `
+                <div class="text-center max-w-lg mx-auto space-y-3">
+                    <div class="inline-block px-3 py-0.5 bg-carnival-gold/20 border border-carnival-gold text-carnival-yellow rounded-full text-xs font-bold uppercase">
+                        Booth #1 • 15 Wheel Spins
+                    </div>
+                    <h3 class="text-xl font-black text-carnival-yellow font-serif">Spin to Win Wheel</h3>
+
+                    ${renderPredictionSelector('spinner')}
+
+                    <div class="grid grid-cols-3 gap-2 bg-maroon-950/80 p-2.5 rounded-xl border border-maroon-700 text-xs items-center">
+                        <div>
+                            <span class="text-rose-300 text-[10px] block">Spins Taken</span>
+                            <span class="text-base font-bold text-carnival-cream">${data.total} / 15</span>
+                        </div>
+                        <div>
+                            <span class="text-rose-300 text-[10px] block">Wins Landed</span>
+                            <span class="text-base font-bold text-emerald-400">${data.targetCount}</span>
+                        </div>
+                        <div>
+                            <span class="text-rose-300 text-[10px] block">Current Level</span>
+                            <div>${badge}</div>
+                        </div>
+                    </div>
+
+                    <!-- Interactive Wheel Canvas -->
+                    <div class="relative w-52 h-52 mx-auto my-2 flex items-center justify-center">
+                        <div class="absolute -top-3 text-carnival-yellow text-2xl z-20"><i class="fa-solid fa-caret-down"></i></div>
+                        <canvas id="wheel-canvas" width="208" height="208" class="rounded-full border-4 border-carnival-gold shadow-2xl cursor-pointer"></canvas>
+                    </div>
+
+                    <div class="flex justify-center gap-2">
+                        <button id="spin-btn" onclick="spinWheel()" ${!isReady || data.total >= 15 ? 'disabled class="opacity-50 cursor-not-allowed px-5 py-2 bg-gray-700 text-gray-400 text-xs font-bold rounded-xl"' : 'class="px-6 py-2.5 bg-carnival-gold hover:bg-yellow-300 text-maroon-950 font-black text-xs rounded-xl border border-yellow-200 transition shadow-lg"'}>
+                            <i class="fa-solid fa-rotate mr-1"></i> ${data.total >= 15 ? 'BOOTH COMPLETED' : 'SPIN THE WHEEL'}
+                        </button>
+                        <button onclick="resetBoothData('spinner')" class="px-3 py-2 bg-maroon-800 hover:bg-maroon-700 text-rose-200 text-xs font-bold rounded-xl border border-maroon-600 transition">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+            `;
+            drawWheel();
+        }
+
+        const wheelSectors = [
+            { label: 'WIN!', color: '#10B981', isWin: true },
+            { label: 'LOSS', color: '#9B1130', isWin: false },
+            { label: 'LOSS', color: '#580B1E', isWin: false },
+            { label: 'WIN!', color: '#10B981', isWin: true },
+            { label: 'LOSS', color: '#9B1130', isWin: false },
+            { label: 'LOSS', color: '#580B1E', isWin: false },
+            { label: 'WIN!', color: '#10B981', isWin: true },
+            { label: 'LOSS', color: '#580B1E', isWin: false }
+        ];
+
+        function drawWheel() {
+            const canvas = document.getElementById('wheel-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const arc = (2 * Math.PI) / wheelSectors.length;
+
+            ctx.clearRect(0, 0, 208, 208);
+            ctx.save();
+            ctx.translate(104, 104);
+            ctx.rotate(spinAngle);
+
+            for (let i = 0; i < wheelSectors.length; i++) {
+                const angle = i * arc;
+                ctx.beginPath();
+                ctx.fillStyle = wheelSectors[i].color;
+                ctx.moveTo(0, 0);
+                ctx.arc(0, 0, 98, angle, angle + arc);
+                ctx.lineTo(0, 0);
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#FCD34D';
+                ctx.stroke();
+
+                ctx.save();
+                ctx.rotate(angle + arc / 2);
+                ctx.fillStyle = '#FFF8E7';
+                ctx.font = 'bold 11px sans-serif';
+                ctx.fillText(wheelSectors[i].label, 45, 4);
+                ctx.restore();
+            }
+            ctx.restore();
+        }
+
+        function spinWheel() {
+            if (isSpinning) return;
+            const data = state.trials.spinner;
+            if (!data.predictedCategory || data.total >= 15) return;
+
+            isSpinning = true;
+            let speed = 0.3 + Math.random() * 0.2;
+            const friction = 0.982;
+
+            function step() {
+                spinAngle += speed;
+                speed *= friction;
+                drawWheel();
+                if (Math.random() < 0.25) playSound('tick');
+
+                if (speed > 0.005) {
+                    requestAnimationFrame(step);
+                } else {
+                    isSpinning = false;
+                    const normalized = (2 * Math.PI - (spinAngle % (2 * Math.PI))) % (2 * Math.PI);
+                    const idx = Math.floor(normalized / ((2 * Math.PI) / wheelSectors.length));
+                    const win = wheelSectors[idx].isWin;
+
+                    data.total++;
+                    if (win) {
+                        data.targetCount++;
+                        addTickets(5);
+                        playSound('win');
+                        showToast('WINNER! Landed on Win sector (+5 Tickets)', 'win');
+                    } else {
+                        playSound('hit');
+                        showToast('Landed on Loss sector. Try again!', 'info');
+                    }
+
+                    openBooth('spinner');
+                    if (data.total === 15) {
+                        data.completed = true;
+                        setTimeout(() => showCertificate('spinner'), 400);
+                    }
+                }
+            }
+            requestAnimationFrame(step);
+        }
+
+        /* --- MINI-GAME 2: CAN KNOCKDOWN (PHYSICS SLINGSHOT) --- */
+        let canGameObj = null;
+
+        function renderCansBooth(container) {
+            const data = state.trials.cans;
+            const badge = getLikelihoodBadge(data.targetCount, data.total);
+            const isReady = !!data.predictedCategory;
+
+            container.innerHTML = `
+                <div class="text-center max-w-lg mx-auto space-y-3">
+                    <div class="inline-block px-3 py-0.5 bg-carnival-gold/20 border border-carnival-gold text-carnival-yellow rounded-full text-xs font-bold uppercase">
+                        Booth #2 • 8 Physics Ball Throws
+                    </div>
+                    <h3 class="text-xl font-black text-carnival-yellow font-serif">Can Knockdown Shooter</h3>
+
+                    ${renderPredictionSelector('cans')}
+
+                    <div class="grid grid-cols-3 gap-2 bg-maroon-950/80 p-2.5 rounded-xl border border-maroon-700 text-xs items-center">
+                        <div>
+                            <span class="text-rose-300 text-[10px] block">Throws</span>
+                            <span class="text-base font-bold text-carnival-cream">${data.total} / 8</span>
+                        </div>
+                        <div>
+                            <span class="text-rose-300 text-[10px] block">Hits</span>
+                            <span class="text-base font-bold text-amber-400">${data.targetCount}</span>
+                        </div>
+                        <div>
+                            <span class="text-rose-300 text-[10px] block">Current Level</span>
+                            <div>${badge}</div>
+                        </div>
+                    </div>
+
+                    <div class="relative w-full max-w-md h-52 mx-auto rounded-xl overflow-hidden border-2 border-carnival-gold shadow-2xl">
+                        <canvas id="cans-canvas" width="400" height="208" class="w-full h-full game-canvas"></canvas>
+                        <div class="absolute bottom-2 left-2 text-[10px] text-rose-200 bg-maroon-950/80 px-2 py-1 rounded border border-maroon-700">
+                            🖱️ Drag back ball & release to throw!
+                        </div>
+                    </div>
+
+                    <div class="flex justify-center gap-2">
+                        <button onclick="resetBoothData('cans')" class="px-4 py-2 bg-maroon-800 hover:bg-maroon-700 text-rose-200 text-xs font-bold rounded-xl border border-maroon-600 transition">
+                            Reset Game
+                        </button>
+                    </div>
+                </div>
+            `;
+            initCansCanvas();
+        }
+
+        function initCansCanvas() {
+            const canvas = document.getElementById('cans-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            let ball = { x: 70, y: 150, vx: 0, vy: 0, radius: 12, isDragging: false, isShot: false };
+            let cans = [
+                { x: 310, y: 150, w: 20, h: 30, knocked: false },
+                { x: 335, y: 150, w: 20, h: 30, knocked: false },
+                { x: 322, y: 118, w: 20, h: 30, knocked: false }
+            ];
+
+            function resetBall() {
+                ball.x = 70;
+                ball.y = 150;
+                ball.vx = 0;
+                ball.vy = 0;
+                ball.isShot = false;
+                ball.isDragging = false;
+            }
+
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // Table
+                ctx.fillStyle = '#7A0C26';
+                ctx.fillRect(280, 180, 100, 28);
+                ctx.fillStyle = '#FCD34D';
+                ctx.fillRect(280, 178, 100, 3);
+
+                // Cans
+                cans.forEach(c => {
+                    ctx.save();
+                    ctx.fillStyle = c.knocked ? '#6B7280' : '#E11D48';
+                    ctx.strokeStyle = '#FFF8E7';
+                    ctx.lineWidth = 1.5;
+                    ctx.fillRect(c.x, c.y, c.w, c.h);
+                    ctx.strokeRect(c.x, c.y, c.w, c.h);
+                    ctx.restore();
+                });
+
+                // Aim trajectory line
+                if (ball.isDragging) {
+                    ctx.beginPath();
+                    ctx.moveTo(ball.x, ball.y);
+                    ctx.lineTo(70, 150);
+                    ctx.strokeStyle = '#FCD34D';
+                    ctx.setLineDash([4, 4]);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+
+                // Ball
+                ctx.beginPath();
+                ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+                ctx.fillStyle = '#F59E0B';
+                ctx.fill();
+                ctx.strokeStyle = '#FFF';
+                ctx.stroke();
+
+                if (ball.isShot) {
+                    ball.x += ball.vx;
+                    ball.y += ball.vy;
+                    ball.vy += 0.35; // Gravity
+
+                    // Collision checking with Cans
+                    cans.forEach(c => {
+                        if (!c.knocked && ball.x + ball.radius > c.x && ball.x - ball.radius < c.x + c.w &&
+                            ball.y + ball.radius > c.y && ball.y - ball.radius < c.y + c.h) {
+                            c.knocked = true;
+                            c.x += 15;
+                            playSound('hit');
+
+                            const data = state.trials.cans;
+                            data.total++;
+                            data.targetCount++;
+                            addTickets(4);
+                            showToast('CAN KNOCKDOWN HIT! (+4 Tickets)', 'win');
+                            resetBall();
+                            openBooth('cans');
+                            if (data.total === 8) {
+                                data.completed = true;
+                                setTimeout(() => showCertificate('cans'), 400);
+                            }
+                        }
+                    });
+
+                    // Out of bounds miss
+                    if (ball.x > canvas.width || ball.y > canvas.height) {
+                        const data = state.trials.cans;
+                        data.total++;
+                        playSound('swish');
+                        showToast('Missed the cans! Try aiming higher.', 'info');
+                        resetBall();
+                        openBooth('cans');
+                        if (data.total === 8) {
+                            data.completed = true;
+                            setTimeout(() => showCertificate('cans'), 400);
+                        }
+                    }
+                }
+
+                requestAnimationFrame(draw);
+            }
+
+            function getMousePos(e) {
+                const rect = canvas.getBoundingClientRect();
+                return {
+                    x: (e.clientX || e.touches[0].clientX) - rect.left,
+                    y: (e.clientY || e.touches[0].clientY) - rect.top
+                };
+            }
+
+            canvas.onmousedown = canvas.ontouchstart = (e) => {
+                const data = state.trials.cans;
+                if (!data.predictedCategory || data.total >= 8 || ball.isShot) return;
+                const pos = getMousePos(e);
+                const dist = Math.hypot(pos.x - ball.x, pos.y - ball.y);
+                if (dist < 30) ball.isDragging = true;
+            };
+
+            canvas.onmousemove = canvas.ontouchmove = (e) => {
+                if (ball.isDragging) {
+                    const pos = getMousePos(e);
+                    ball.x = Math.min(110, Math.max(30, pos.x));
+                    ball.y = Math.min(190, Math.max(100, pos.y));
+                }
+            };
+
+            canvas.onmouseup = canvas.ontouchend = () => {
+                if (ball.isDragging) {
+                    ball.isDragging = false;
+                    ball.isShot = true;
+                    ball.vx = (70 - ball.x) * 0.4;
+                    ball.vy = (150 - ball.y) * 0.4;
+                    playSound('swish');
+                }
+            };
+
+            draw();
+        }
+
+        /* --- MINI-GAME 3: BASKETBALL SHOOTOUT --- */
+        function renderBasketballBooth(container) {
+            const data = state.trials.basketball;
+            const badge = getLikelihoodBadge(data.targetCount, data.total);
+            const isReady = !!data.predictedCategory;
+
+            container.innerHTML = `
+                <div class="text-center max-w-lg mx-auto space-y-3">
+                    <div class="inline-block px-3 py-0.5 bg-carnival-gold/20 border border-carnival-gold text-carnival-yellow rounded-full text-xs font-bold uppercase">
+                        Booth #3 • 12 Basketball Shots
+                    </div>
+                    <h3 class="text-xl font-black text-carnival-yellow font-serif">Basketball Shootout</h3>
+
+                    ${renderPredictionSelector('basketball')}
+
+                    <div class="grid grid-cols-3 gap-2 bg-maroon-950/80 p-2.5 rounded-xl border border-maroon-700 text-xs items-center">
+                        <div>
+                            <span class="text-rose-300 text-[10px] block">Shots Taken</span>
+                            <span class="text-base font-bold text-carnival-cream">${data.total} / 12</span>
+                        </div>
+                        <div>
+                            <span class="text-rose-300 text-[10px] block">Baskets Made</span>
+                            <span class="text-base font-bold text-orange-400">${data.targetCount}</span>
+                        </div>
+                        <div>
+                            <span class="text-rose-300 text-[10px] block">Current Level</span>
+                            <div>${badge}</div>
+                        </div>
+                    </div>
+
+                    <div class="relative w-full max-w-md h-52 mx-auto rounded-xl overflow-hidden border-2 border-carnival-gold shadow-2xl">
+                        <canvas id="basketball-canvas" width="400" height="208" class="w-full h-full game-canvas"></canvas>
+                    </div>
+
+                    <div class="flex justify-center gap-2">
+                        <button onclick="shootBasketballShot()" ${!isReady || data.total >= 12 ? 'disabled class="opacity-50 cursor-not-allowed px-5 py-2 bg-gray-700 text-gray-400 text-xs font-bold rounded-xl"' : 'class="px-6 py-2.5 bg-carnival-gold hover:bg-yellow-300 text-maroon-950 font-black text-xs rounded-xl border border-yellow-200 transition shadow-lg"'}>
+                            <i class="fa-solid fa-basketball mr-1"></i> SHOOT BASKETBALL
+                        </button>
+                        <button onclick="resetBoothData('basketball')" class="px-3 py-2 bg-maroon-800 hover:bg-maroon-700 text-rose-200 text-xs font-bold rounded-xl border border-maroon-600 transition">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+            `;
+            initBasketballCanvas();
+        }
+
+        let bballState = { x: 60, y: 150, vx: 0, vy: 0, isShot: false };
+
+        function initBasketballCanvas() {
+            const canvas = document.getElementById('basketball-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // Backboard & Hoop
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(330, 40, 10, 60);
+                ctx.fillStyle = '#E11D48';
+                ctx.fillRect(300, 75, 30, 6); // Rim
+
+                // Net
+                ctx.strokeStyle = '#FFF';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(300, 81);
+                ctx.lineTo(308, 105);
+                ctx.lineTo(322, 105);
+                ctx.lineTo(330, 81);
+                ctx.stroke();
+
+                // Ball
+                ctx.beginPath();
+                ctx.arc(bballState.x, bballState.y, 11, 0, Math.PI * 2);
+                ctx.fillStyle = '#F97316';
+                ctx.fill();
+                ctx.strokeStyle = '#7C2D12';
+                ctx.stroke();
+
+                if (bballState.isShot) {
+                    bballState.x += bballState.vx;
+                    bballState.y += bballState.vy;
+                    bballState.vy += 0.38;
+
+                    // Scoring collision
+                    if (bballState.x >= 300 && bballState.x <= 330 && bballState.y >= 70 && bballState.y <= 90 && bballState.vy > 0) {
+                        const data = state.trials.basketball;
+                        data.total++;
+                        data.targetCount++;
+                        addTickets(5);
+                        playSound('swish');
+                        showToast('SWOOSH! Basket Scored! (+5 Tickets)', 'win');
+                        bballState = { x: 60, y: 150, vx: 0, vy: 0, isShot: false };
+                        openBooth('basketball');
+                        if (data.total === 12) {
+                            data.completed = true;
+                            setTimeout(() => showCertificate('basketball'), 400);
+                        }
+                    } else if (bballState.x > canvas.width || bballState.y > canvas.height) {
+                        const data = state.trials.basketball;
+                        data.total++;
+                        playSound('hit');
+                        showToast('Rim miss! Adjust shot timing.', 'info');
+                        bballState = { x: 60, y: 150, vx: 0, vy: 0, isShot: false };
+                        openBooth('basketball');
+                        if (data.total === 12) {
+                            data.completed = true;
+                            setTimeout(() => showCertificate('basketball'), 400);
+                        }
+                    }
+                }
+
+                requestAnimationFrame(draw);
+            }
+            draw();
+        }
+
+        function shootBasketballShot() {
+            const data = state.trials.basketball;
+            if (!data.predictedCategory || data.total >= 12 || bballState.isShot) return;
+
+            bballState.isShot = true;
+            bballState.vx = 6.2 + Math.random() * 2.2;
+            bballState.vy = -8.5 - Math.random() * 2.0;
+            playSound('swish');
+        }
+
+        /* --- MINI-GAME 4: RING-A-BOTTLE --- */
+        function renderRingBooth(container) {
+            const data = state.trials.ring;
+            const badge = getLikelihoodBadge(data.targetCount, data.total);
+            const isReady = !!data.predictedCategory;
+
+            container.innerHTML = `
+                <div class="text-center max-w-lg mx-auto space-y-3">
+                    <div class="inline-block px-3 py-0.5 bg-carnival-gold/20 border border-carnival-gold text-carnival-yellow rounded-full text-xs font-bold uppercase">
+                        Booth #4 • 30 Ring Tosses
+                    </div>
+                    <h3 class="text-xl font-black text-carnival-yellow font-serif">Ring-a-Bottle Challenge</h3>
+
+                    ${renderPredictionSelector('ring')}
+
+                    <div class="grid grid-cols-3 gap-2 bg-maroon-950/80 p-2.5 rounded-xl border border-maroon-700 text-xs items-center">
+                        <div>
+                            <span class="text-rose-300 text-[10px] block">Tosses Done</span>
+                            <span class="text-base font-bold text-carnival-cream">${data.total} / 30</span>
+                        </div>
+                        <div>
+                            <span class="text-rose-300 text-[10px] block">Rings Placed</span>
+                            <span class="text-base font-bold text-yellow-400">${data.targetCount}</span>
+                        </div>
+                        <div>
+                            <span class="text-rose-300 text-[10px] block">Current Level</span>
+                            <div>${badge}</div>
+                        </div>
+                    </div>
+
+                    <div class="p-6 bg-maroon-950/80 rounded-xl border-2 border-carnival-gold flex justify-center items-center space-x-8 min-h-[120px]">
+                        <div class="text-5xl transform hover:scale-110 transition">🍾</div>
+                        <div class="text-5xl transform hover:scale-110 transition">🍾</div>
+                        <div class="text-5xl transform hover:scale-110 transition">🍾</div>
+                    </div>
+
+                    <div class="flex justify-center gap-2">
+                        <button onclick="tossRing(1)" ${!isReady || data.total >= 30 ? 'disabled class="opacity-50 cursor-not-allowed px-4 py-2 bg-gray-700 text-gray-400 text-xs font-bold rounded-xl"' : 'class="px-5 py-2.5 bg-carnival-gold hover:bg-yellow-300 text-maroon-950 font-black text-xs rounded-xl border border-yellow-200 transition shadow"'}>
+                            TOSS 1 RING
+                        </button>
+                        <button onclick="tossRing(5)" ${!isReady || data.total >= 30 ? 'disabled class="opacity-50 cursor-not-allowed px-4 py-2 bg-gray-700 text-gray-400 text-xs font-bold rounded-xl"' : 'class="px-5 py-2.5 bg-carnival-gold/80 hover:bg-carnival-gold text-maroon-950 font-black text-xs rounded-xl border border-yellow-200 transition shadow"'}>
+                            FAST TOSS (5 RINGS)
+                        </button>
+                        <button onclick="resetBoothData('ring')" class="px-3 py-2 bg-maroon-800 hover:bg-maroon-700 text-rose-200 text-xs font-bold rounded-xl border border-maroon-600 transition">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function tossRing(amount) {
+            const data = state.trials.ring;
+            if (!data.predictedCategory || data.total >= 30) return;
+
+            const attempts = Math.min(amount, 30 - data.total);
+            let hits = 0;
+            for (let i = 0; i < attempts; i++) {
+                if (Math.random() < 0.28) hits++;
+            }
+
+            data.total += attempts;
+            data.targetCount += hits;
+
+            if (hits > 0) {
+                addTickets(hits * 3);
+                playSound('win');
+                showToast(`Ring Toss Success! ${hits} ring(s) landed (+${hits * 3} Tickets)`, 'win');
+            } else {
+                playSound('hit');
+                showToast('Rings bounced off bottle necks!', 'info');
+            }
+
+            openBooth('ring');
+            if (data.total === 30) {
+                data.completed = true;
+                setTimeout(() => showCertificate('ring'), 400);
+            }
+        }
+
+        function addTickets(amount) {
+            state.tickets += amount;
+            document.getElementById('ticket-display').innerText = state.tickets;
+            const shopCount = document.getElementById('shop-ticket-count');
+            if (shopCount) shopCount.innerText = state.tickets;
+        }
+
+        function renderPrizeShop() {
+            const grid = document.getElementById('prize-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            prizesCatalog.forEach(p => {
+                const isUnlocked = state.prizesUnlocked.includes(p.id);
+                const canAfford = state.tickets >= p.cost;
+
+                const card = document.createElement('div');
+                card.className = `p-4 rounded-xl border-2 flex flex-col items-center text-center shadow-lg transition ${isUnlocked ? 'bg-emerald-950/60 border-emerald-500' : 'bg-maroon-900 border-maroon-700'}`;
+                card.innerHTML = `
+                    <div class="text-4xl mb-2">${p.emoji}</div>
+                    <h4 class="font-bold text-carnival-yellow text-sm mb-1">${p.name}</h4>
+                    <p class="text-xs text-rose-200 mb-3">Cost: ${p.cost} Tickets</p>
+                    <button onclick="buyPrize('${p.id}')" ${isUnlocked || !canAfford ? 'disabled' : ''} 
+                            class="mt-auto px-4 py-1.5 rounded-lg text-xs font-bold transition ${isUnlocked ? 'bg-emerald-800 text-emerald-200' : canAfford ? 'bg-carnival-gold text-maroon-900 hover:bg-yellow-300' : 'bg-gray-700 text-gray-400 cursor-not-allowed'}">
+                        ${isUnlocked ? 'UNLOCKED' : canAfford ? 'CLAIM PRIZE' : 'NEED MORE TICKETS'}
+                    </button>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function buyPrize(prizeId) {
+            const prize = prizesCatalog.find(p => p.id === prizeId);
+            if (!prize || state.tickets < prize.cost) return;
+
+            state.tickets -= prize.cost;
+            state.prizesUnlocked.push(prizeId);
+            document.getElementById('ticket-display').innerText = state.tickets;
+            playSound('win');
+            confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
+            showToast(`Congratulations! You unlocked ${prize.name}!`, 'win');
+            renderPrizeShop();
+            updateGlobalStats();
+        }
+
+        function showCertificate(boothKey) {
+            const data = state.trials[boothKey];
+            const actualCategory = getLikelihoodName(data.targetCount, data.total);
+            const isRight = data.predictedCategory === actualCategory;
+
+            document.getElementById('cert-booth-name').innerText = boothTitles[boothKey];
+            document.getElementById('cert-predicted-cat').innerText = data.predictedCategory || 'None';
+            document.getElementById('cert-actual-cat').innerText = `${actualCategory} (${data.targetCount}/${data.total})`;
+
+            const badge = document.getElementById('cert-status-badge');
+            const encouragement = document.getElementById('cert-encouragement-text');
+
+            if (isRight) {
+                playSound('win');
+                confetti({ particleCount: 120, spread: 90, origin: { y: 0.5 } });
+                badge.className = "inline-block px-3 py-1 rounded-full text-xs font-black uppercase bg-emerald-100 text-emerald-800 border border-emerald-400";
+                badge.innerHTML = "✨ PREDICTION MATCHED EXPERIMENT! ✨";
+                encouragement.innerHTML = `"Outstanding reasoning! Your prediction of <strong>${data.predictedCategory}</strong> perfectly matched the experimental ratio of <strong>${data.targetCount}/${data.total}</strong>!"`;
+            } else {
+                playSound('hit');
+                badge.className = "inline-block px-3 py-1 rounded-full text-xs font-black uppercase bg-amber-100 text-amber-900 border border-amber-400";
+                badge.innerHTML = "💡 EXPERIMENTAL DISCOVERY!";
+                encouragement.innerHTML = `"Great trial! You predicted <strong>${data.predictedCategory}</strong>, while the experiment showed <strong>${actualCategory}</strong> (${data.targetCount}/${data.total}). In statistics, every trial provides valuable insight!"`;
+            }
+
+            document.getElementById('certificate-modal').classList.remove('hidden');
+        }
+
+        function closeCertificateModal() {
+            document.getElementById('certificate-modal').classList.add('hidden');
+        }
+
+        function retryCurrentBooth() {
+            closeCertificateModal();
+            if (state.activeBooth) resetBoothData(state.activeBooth);
+        }
+
+        function resetBoothData(key) {
+            state.trials[key].total = 0;
+            state.trials[key].targetCount = 0;
+            state.trials[key].predictedCategory = null;
+            state.trials[key].completed = false;
+            openBooth(key);
+            showToast('Booth reset. Select a new prediction!', 'info');
+        }
+
+        function resetAllTrials() {
+            Object.keys(state.trials).forEach(k => {
+                state.trials[k].total = 0;
+                state.trials[k].targetCount = 0;
+                state.trials[k].predictedCategory = null;
+                state.trials[k].completed = false;
+            });
+            updateGlobalStats();
+            updateAnalyticsTable();
+            showToast('All trial data has been reset.', 'info');
+        }
+
+        function updateGlobalStats() {
+            let total = 0;
+            let booths = 0;
+            Object.values(state.trials).forEach(b => {
+                total += b.total;
+                if (b.total > 0) booths++;
+            });
+            document.getElementById('stat-total-trials').innerText = total;
+            document.getElementById('stat-booths-visited').innerText = `${booths} / 4`;
+            document.getElementById('stat-prizes-unlocked').innerText = state.prizesUnlocked.length;
+        }
+
+        function updateAnalyticsTable() {
+            const tbody = document.getElementById('analytics-table-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            Object.keys(state.trials).forEach(key => {
+                const b = state.trials[key];
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-maroon-900/50 transition';
+
+                const actualCategory = getLikelihoodName(b.targetCount, b.total);
+                const badge = getLikelihoodBadge(b.targetCount, b.total);
+                
+                let resultText = '<span class="text-rose-300 italic">In Progress</span>';
+                if (b.total > 0 && b.predictedCategory) {
+                    if (b.predictedCategory === actualCategory) {
+                        resultText = '<span class="text-emerald-400 font-extrabold"><i class="fa-solid fa-circle-check mr-1"></i>ACCURATE</span>';
+                    } else {
+                        resultText = '<span class="text-amber-300 font-extrabold"><i class="fa-solid fa-lightbulb mr-1"></i>DISCOVERY</span>';
+                    }
+                }
+
+                tr.innerHTML = `
+                    <td class="p-3 font-bold text-carnival-yellow">${boothTitles[key]}</td>
+                    <td class="p-3 text-rose-200">${b.targetName}</td>
+                    <td class="p-3 font-mono text-carnival-cream">${b.targetCount}</td>
+                    <td class="p-3 font-mono text-carnival-cream">${b.total} / ${b.required}</td>
+                    <td class="p-3 font-bold text-amber-300">${b.predictedCategory || 'None'}</td>
+                    <td class="p-3">${badge}</td>
+                    <td class="p-3">${resultText}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function generateCodexPrompt() {
+            const grade = document.getElementById('codex-grade').value;
+            const booth = document.getElementById('codex-booth').value;
+            const format = document.getElementById('codex-format').value;
+            const custom = document.getElementById('codex-custom').value;
+
+            const output = document.getElementById('codex-output-container');
+            const status = document.getElementById('codex-status');
+            const btn = document.getElementById('codex-generate-btn');
+
+            status.classList.remove('hidden');
+            btn.disabled = true;
+
+            const systemPrompt = `You are a curriculum designer specializing in Year 6 probability. Generate output in clear Markdown formatting.`;
+            const userQuery = `Create a "${format}" for "${grade}". Theme: ${booth}. Extra instructions: ${custom || 'None'}.`;
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: userQuery }] }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] }
+                    })
+                });
+
+                const result = await response.json();
+                const text = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (text) {
+                    output.innerText = text;
+                    showToast('Worksheet prompt generated!', 'win');
+                } else {
+                    output.innerText = 'Unable to generate response. Please try again.';
+                }
+            } catch (err) {
+                output.innerText = 'Generation request complete.';
+            } finally {
+                status.classList.add('hidden');
+                btn.disabled = false;
+            }
+        }
+
+        function copyCodexOutput() {
+            const text = document.getElementById('codex-output-container').innerText;
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            showToast('Copied to clipboard!', 'info');
+        }
+
+        function showToast(msg, type = 'info') {
+            const toast = document.getElementById('toast-msg');
+            const toastText = document.getElementById('toast-text');
+            const toastIcon = document.getElementById('toast-icon');
+
+            toastText.innerText = msg;
+            toastIcon.className = type === 'win' ? 'fa-solid fa-trophy text-carnival-yellow text-lg' : 'fa-solid fa-circle-info text-carnival-yellow text-lg';
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3000);
+        }
+
+        function switchTab(tabId) {
+            ['hub', 'analytics', 'shop', 'codex', 'guide'].forEach(id => {
+                document.getElementById(`tab-${id}`).classList.add('hidden');
+                document.getElementById(`nav-${id}`).className = 'tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-200 hover:text-white hover:bg-maroon-800 transition-all';
+            });
+
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            document.getElementById(`nav-${tabId}`).className = 'tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-carnival-gold text-maroon-900 shadow';
+
+            if (tabId === 'analytics') updateAnalyticsTable();
+            if (tabId === 'shop') renderPrizeShop();
+        }
+
+        function openBooth(boothKey) {
+            state.activeBooth = boothKey;
+            const arena = document.getElementById('booth-arena');
+            const content = document.getElementById('booth-content-area');
+            arena.classList.remove('hidden');
+            arena.scrollIntoView({ behavior: 'smooth' });
+
+            if (boothKey === 'spinner') renderSpinnerBooth(content);
+            else if (boothKey === 'cans') renderCansBooth(content);
+            else if (boothKey === 'basketball') renderBasketballBooth(content);
+            else if (boothKey === 'ring') renderRingBooth(content);
+
+            updateGlobalStats();
+        }
+
+        function closeBooth() {
+            document.getElementById('booth-arena').classList.add('hidden');
+            state.activeBooth = null;
+        }
+
+        window.onload = function() {
+            updateGlobalStats();
+            updateAnalyticsTable();
+        };
+    </script>
+
+<style>
+  .game-control{accent-color:#FCD34D; width:100%; cursor:pointer}
+  .game-pill{background:#F59E0B;color:#200208;padding:10px 18px;border-radius:12px;font-weight:900}
+  .game-pill:disabled{opacity:.4;cursor:not-allowed}
+  .help-caption{color:#fecdd3;font-size:12px;line-height:1.6}
+  #booth-arena canvas{max-width:100%}
+  @media(max-width:640px){header nav{overflow-x:auto;max-width:100%;}header nav button{white-space:nowrap}}
+</style>
+<script>
+/* Gameplay patch: managed animation, usable aiming controls, save data and offline worksheets. */
+(function(){
+  const STORE='carnival-probability-arcade-v2';
+  let currentFrame=0, session=0, busy=false;
+  const cancelGame=()=>{session++;if(currentFrame) cancelAnimationFrame(currentFrame);currentFrame=0;busy=false;};
+  const schedule=(fn)=>{currentFrame=requestAnimationFrame(fn)};
+  const persist=()=>{try{localStorage.setItem(STORE,JSON.stringify({tickets:state.tickets,prizesUnlocked:state.prizesUnlocked,trials:state.trials}))}catch(e){}};
+  function refresh(){updateGlobalStats();updateAnalyticsTable();document.getElementById('ticket-display').textContent=state.tickets;document.getElementById('shop-ticket-count').textContent=state.tickets;persist()}
+  const initialOpen=openBooth;
+  openBooth=function(key){cancelGame();initialOpen(key);refresh()};
+  closeBooth=function(){cancelGame();document.getElementById('booth-arena').classList.add('hidden');state.activeBooth=null;};
+  const initialSet=setPredictionCategory;
+  setPredictionCategory=function(key,category){if(state.trials[key].total>0){showToast('Reset the booth to change your prediction.','info');return;}initialSet(key,category);persist()};
+  const initialTickets=addTickets;
+  addTickets=function(amount){initialTickets(amount);refresh()};
+  const initialBuy=buyPrize;
+  buyPrize=function(id){if(state.prizesUnlocked.includes(id))return;initialBuy(id);refresh()};
+  const initialReset=resetBoothData;
+  resetBoothData=function(key){cancelGame();initialReset(key);refresh()};
+  const initialResetAll=resetAllTrials;
+  resetAllTrials=function(){if(!confirm('Clear all your trial results? Tickets and purchased prizes will remain.'))return;cancelGame();initialResetAll();refresh()};
+  const initialSpin=spinWheel;
+  spinWheel=function(){
+    const d=state.trials.spinner;
+    if(busy||!d.predictedCategory||d.total>=d.required)return;
+    busy=true;const token=session;
+    const arc=2*Math.PI/8;
+    const chosen=Math.floor(Math.random()*8);
+    // Pointer is at 12 o'clock, so align the center of chosen sector to -PI/2.
+    const target=-Math.PI/2-(chosen+.5)*arc;
+    const start=spinAngle;
+    let travel=((target-start)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)+Math.PI*2*5;
+    const duration=1550, begin=performance.now();
+    function frame(t){
+      if(session!==token)return;
+      const p=Math.min(1,(t-begin)/duration);
+      const eased=1-Math.pow(1-p,4);
+      spinAngle=start+travel*eased;drawWheel();
+      if(p<1){schedule(frame);return}
+      busy=false;d.total++;
+      if(wheelSectors[chosen].isWin){d.targetCount++;addTickets(5);playSound('win');showToast('WIN sector! +5 tickets','win')}
+      else {playSound('hit');showToast('LOSS sector. Spin again!')}
+      if(d.total>=d.required)d.completed=true;
+      openBooth('spinner');
+      if(d.completed)setTimeout(()=>{if(state.activeBooth==='spinner')showCertificate('spinner')},220);
+      refresh();
+    }
+    schedule(frame)
+  };
+  initCansCanvas=function(){
+    const canvas=document.getElementById('cans-canvas');if(!canvas)return;
+    const ctx=canvas.getContext('2d'),token=session;
+    const d=state.trials.cans;
+    let ball={x:65,y:154,vx:0,vy:0},drag=false,shot=false,started=0,won=false;
+    const cans=[{x:300,y:146},{x:324,y:146},{x:312,y:114}];
+    function draw(){
+      if(session!==token)return;
+      ctx.clearRect(0,0,400,208);
+      ctx.fillStyle='#7A0C26';ctx.fillRect(275,178,110,30);ctx.fillStyle='#FCD34D';ctx.fillRect(275,176,110,3);
+      cans.forEach(c=>{ctx.fillStyle='#E11D48';ctx.fillRect(c.x,c.y,21,30);ctx.strokeStyle='#FFE4B5';ctx.strokeRect(c.x,c.y,21,30)});
+      if(drag){ctx.strokeStyle='#FCD34D';ctx.setLineDash([5,4]);ctx.beginPath();ctx.moveTo(65,154);ctx.lineTo(ball.x,ball.y);ctx.stroke();ctx.setLineDash([])}
+      ctx.fillStyle='#F59E0B';ctx.beginPath();ctx.arc(ball.x,ball.y,12,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#FFF';ctx.stroke();
+      if(shot){
+        ball.x+=ball.vx;ball.y+=ball.vy;ball.vy+=.27;
+        if(cans.some(c=>ball.x+10>c.x&&ball.x-10<c.x+21&&ball.y+10>c.y&&ball.y-10<c.y+30)){finish(true);return}
+        if(ball.x>420||ball.y>220||ball.x<0||performance.now()-started>3200){finish(false);return}
+      }
+      schedule(draw);
+    }
+    function finish(hit){
+      if(session!==token||!shot)return;shot=false;d.total++;
+      if(hit){d.targetCount++;addTickets(4);playSound('win');showToast('Can hit! +4 tickets','win')}
+      else {playSound('hit');showToast('Missed! Try pulling down and left.')};
+      if(d.total===d.required)d.completed=true;
+      openBooth('cans');
+      if(d.completed)setTimeout(()=>{if(state.activeBooth==='cans')showCertificate('cans')},220);
+      refresh();
+    }
+    function pos(e){const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)*400/r.width,y:(e.clientY-r.top)*208/r.height}}
+    canvas.addEventListener('pointerdown',e=>{
+      if(!d.predictedCategory||d.total>=d.required||shot)return;
+      const p=pos(e);if(Math.hypot(p.x-ball.x,p.y-ball.y)>45)return;
+      drag=true;canvas.setPointerCapture(e.pointerId);e.preventDefault();
+    });
+    canvas.addEventListener('pointermove',e=>{if(!drag)return;const p=pos(e);ball.x=Math.max(14,Math.min(110,p.x));ball.y=Math.max(105,Math.min(195,p.y));e.preventDefault()});
+    canvas.addEventListener('pointerup',e=>{
+      if(!drag)return;drag=false;
+      const vx=(65-ball.x)*.26,vy=(154-ball.y)*.26;
+      if(Math.hypot(vx,vy)<1){ball={x:65,y:154,vx:0,vy:0};return}
+      ball.vx=vx;ball.vy=vy;shot=true;started=performance.now();playSound('swish');
+    });
+    schedule(draw);
+  };
+  renderBasketballBooth=function(container){
+    const d=state.trials.basketball;
+    container.innerHTML=`<div class="text-center max-w-lg mx-auto space-y-3">
+      <div class="inline-block px-3 py-1 rounded-full bg-amber-900 text-amber-200 text-xs font-bold">BOOTH #3 • 12 SHOTS</div>
+      <h3 class="text-xl font-black text-carnival-yellow">🏀 Basketball Shootout</h3>
+      ${renderPredictionSelector('basketball')}
+      <div class="grid grid-cols-3 gap-2 bg-maroon-950 p-3 rounded-xl text-sm">
+      <div>Shots<br><b>${d.total} / 12</b></div><div>Scored<br><b>${d.targetCount}</b></div><div>Likelihood<br>${getLikelihoodBadge(d.targetCount,d.total)}</div></div>
+      <canvas id="basketball-canvas" width="400" height="208" class="game-canvas w-full rounded-xl border-2 border-carnival-gold"></canvas>
+      <div class="grid grid-cols-2 gap-4 text-left text-sm">
+      <label>Launch angle <span id="angle-out">50°</span><input id="angle-control" class="game-control" type="range" min="25" max="75" value="50"/></label>
+      <label>Power <span id="power-out">75%</span><input id="power-control" class="game-control" type="range" min="35" max="100" value="75"/></label></div>
+      <p class="help-caption">Choose an angle and power, then shoot. The hoop is on the right!</p>
+      <div class="flex gap-2 justify-center"><button id="shoot-btn" class="game-pill" onclick="shootBasketballShot()" ${!d.predictedCategory||d.total===d.required?'disabled':''}>🏀 SHOOT BALL</button><button class="px-4 py-2 rounded-xl bg-maroon-700" onclick="resetBoothData('basketball')">Reset</button></div>
+      </div>`;
+    for(const id of ['angle','power'])document.getElementById(id+'-control').oninput=e=>document.getElementById(id+'-out').textContent=e.target.value+(id==='angle'?'°':'%');
+    initBasketballCanvas();
+  };
+  let bb=null;
+  initBasketballCanvas=function(){
+    const canvas=document.getElementById('basketball-canvas');if(!canvas)return;
+    const ctx=canvas.getContext('2d'),token=session;
+    bb={x:60,y:170,vx:0,vy:0,shooting:false,scored:false,started:0};
+    function draw(){
+      if(session!==token)return;
+      ctx.clearRect(0,0,400,208);
+      ctx.fillStyle='#8B5CF6';ctx.fillRect(350,30,8,78);
+      ctx.strokeStyle='#FFF';ctx.lineWidth=4;ctx.strokeRect(344,44,12,22);
+      ctx.strokeStyle='#F97316';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(305,88);ctx.lineTo(345,88);ctx.stroke();
+      ctx.lineWidth=1;ctx.strokeStyle='#FFE6C5';ctx.beginPath();ctx.moveTo(305,89);ctx.lineTo(315,112);ctx.lineTo(335,112);ctx.lineTo(345,89);ctx.stroke();
+      ctx.fillStyle='#FB923C';ctx.beginPath();ctx.arc(bb.x,bb.y,10,0,Math.PI*2);ctx.fill();
+      ctx.strokeStyle='#7C2D12';ctx.beginPath();ctx.moveTo(bb.x-10,bb.y);ctx.lineTo(bb.x+10,bb.y);ctx.moveTo(bb.x,bb.y-10);ctx.lineTo(bb.x,bb.y+10);ctx.stroke();
+      if(bb.shooting){
+        const oldY=bb.y;bb.x+=bb.vx;bb.y+=bb.vy;bb.vy+=.34;
+        if(!bb.scored&&bb.vy>0&&oldY<86&&bb.y>=86&&bb.x>312&&bb.x<337){bb.scored=true;finish(true);return}
+        if(bb.y>225||bb.x>420||bb.x<0||performance.now()-bb.started>4000){finish(false);return}
+      }
+      schedule(draw)
+    }
+    function finish(hit){
+      if(!bb.shooting||session!==token)return;
+      bb.shooting=false;
+      const d=state.trials.basketball;d.total++;
+      if(hit){d.targetCount++;addTickets(5);playSound('win');showToast('Basket scored! +5 tickets','win')}
+      else {playSound('hit');showToast('Missed! Adjust angle and power.')};
+      if(d.total===d.required)d.completed=true;
+      openBooth('basketball');
+      if(d.completed)setTimeout(()=>{if(state.activeBooth==='basketball')showCertificate('basketball')},220);
+      refresh();
+    }
+    schedule(draw)
+  };
+  shootBasketballShot=function(){
+    const d=state.trials.basketball;if(!d.predictedCategory||d.total>=d.required||!bb||bb.shooting)return;
+    const angle=Number(document.getElementById('angle-control').value)*Math.PI/180;
+    const power=Number(document.getElementById('power-control').value);
+    const speed=7+power*.13;
+    bb.vx=speed*Math.cos(angle);bb.vy=-speed*Math.sin(angle);
+    bb.shooting=true;bb.started=performance.now();
+    document.getElementById('shoot-btn').disabled=true;playSound('swish');
+  };
+  renderRingBooth=function(container){
+    const d=state.trials.ring;
+    container.innerHTML=`<div class="text-center max-w-lg mx-auto space-y-3">
+    <div class="inline-block px-3 py-1 rounded-full bg-amber-900 text-amber-200 text-xs font-bold">BOOTH #4 • 30 TOSSES</div>
+    <h3 class="text-xl font-black text-carnival-yellow">⭕ Ring-a-Bottle</h3>
+    ${renderPredictionSelector('ring')}
+    <div class="grid grid-cols-3 gap-2 bg-maroon-950 p-3 rounded-xl text-sm"><div>Tossed<br><b>${d.total} / 30</b></div><div>Ringed<br><b>${d.targetCount}</b></div><div>Likelihood<br>${getLikelihoodBadge(d.targetCount,d.total)}</div></div>
+    <div class="bg-maroon-950 border-2 border-carnival-gold rounded-xl py-5 text-5xl flex justify-evenly" id="ring-stage"><span>🍾</span><span>🍾</span><span>🍾</span></div>
+    <label class="block text-sm text-rose-100">Aim left ↔ right <span id="ring-aim-out">Center</span><input type="range" id="ring-aim" class="game-control" min="0" max="100" value="50"/></label>
+    <div class="flex justify-center gap-2"><button class="game-pill" id="ring-toss-btn" onclick="tossRing(1)" ${!d.predictedCategory||d.total===d.required?'disabled':''}>⭕ TOSS RING</button><button class="px-4 py-2 bg-maroon-700 rounded-xl" onclick="resetBoothData('ring')">Reset</button></div>
+    <p class="help-caption">Aim near a bottle (20, 50 or 80). Wind adds a little randomness to each throw.</p>
+    </div>`;
+    document.getElementById('ring-aim').oninput=e=>{const v=+e.target.value;document.getElementById('ring-aim-out').textContent=v<35?'Left':v>65?'Right':'Center'};
+  };
+  tossRing=function(amount){
+    const d=state.trials.ring;if(!d.predictedCategory||d.total>=d.required||busy)return;
+    busy=true;const aim=Number(document.getElementById('ring-aim').value);
+    const wind=(Math.random()-.5)*32;
+    const effective=aim+wind;
+    const hit=[20,50,80].some(x=>Math.abs(x-effective)<9);
+    const stage=document.getElementById('ring-stage'),btn=document.getElementById('ring-toss-btn');
+    btn.disabled=true;stage.style.transform='scale(1.035)';stage.style.transition='transform .18s';
+    const token=session;
+    setTimeout(()=>{
+      if(session!==token)return;
+      busy=false;d.total++;if(hit){d.targetCount++;addTickets(3);playSound('win');showToast('Ring landed! +3 tickets','win')}else{playSound('hit');showToast('Ring bounced off! Try another aim.')};
+      if(d.total===d.required)d.completed=true;
+      openBooth('ring');
+      if(d.completed)setTimeout(()=>{if(state.activeBooth==='ring')showCertificate('ring')},220);
+      refresh();
+    },260)
+  };
+  generateCodexPrompt=async function(){
+    const grade=document.getElementById('codex-grade').value;
+    const booth=document.getElementById('codex-booth').value;
+    const format=document.getElementById('codex-format').value;
+    const custom=document.getElementById('codex-custom').value.trim();
+    const worksheet=`CARNIVAL PROBABILITY ARCADE — CLASSROOM ACTIVITY
+Level: ${grade}
+Theme: ${booth}
+Format: ${format}
+${custom?'Teacher focus: '+custom+'\n':''}
+Name: ____________________ Date: ______________
+
+1. A wheel has 3 WIN sectors and 5 LOSS sectors. Is WIN impossible, less likely, equally likely, more likely, or certain? Explain why.
+
+2. You throw a ball at a stack of cans eight times. Predict your chances of hitting the stack. What factors affect the outcome?
+
+3. Take 12 basketball shots. Record your successful baskets. Express the result as successes / 12.
+
+4. Toss 30 rings. Record the number that land around a bottle. Compare your result with your prediction.
+
+5. Explain why two players can get different experimental results.
+
+6. A spinner has 4 red and 4 blue sectors. Describe the theoretical likelihood of blue.
+
+7. Can an event with a nonzero chance happen zero times in 10 trials? Explain.
+
+8. Which game gave the highest experimental success rate? Show the fraction or percentage.
+
+REFLECTION
+My prediction: ____________________
+My experimental result: ____________
+What I learned: ____________________
+
+TEACHER NOTES
+Spinner theoretical P(WIN) = 3/8 = 37.5% (Less Likely).
+A result of 0 hits does not prove the event is impossible.
+A result of all hits does not prove an event is certain.
+For skill-based games, outcomes depend on player choices and mechanics.`;
+    document.getElementById('codex-output-container').textContent=worksheet;
+    showToast('Offline classroom activity generated!','win');
+  };
+  const oldBadge=getLikelihoodBadge,oldName=getLikelihoodName;
+  getLikelihoodName=function(hits,total){
+    if(!total)return 'Not Tested Yet';
+    if(hits===0)return '0 successes (observed)';
+    if(hits===total)return '100% successes (observed)';
+    return oldName(hits,total);
+  };
+  getLikelihoodBadge=function(hits,total){
+    if(total>0&&hits===0)return '<span class="px-2 py-1 rounded-full bg-slate-800 text-slate-200 text-xs">0% observed</span>';
+    if(total>0&&hits===total)return '<span class="px-2 py-1 rounded-full bg-purple-950 text-purple-200 text-xs">100% observed</span>';
+    return oldBadge(hits,total);
+  };
+  window.addEventListener('load',()=>{
+    try{
+      const saved=JSON.parse(localStorage.getItem(STORE)||'null');
+      if(saved){
+        state.tickets=Math.max(0,Number(saved.tickets)||0);
+        state.prizesUnlocked=Array.isArray(saved.prizesUnlocked)?saved.prizesUnlocked.filter(x=>prizesCatalog.some(p=>p.id===x)):[];
+        for(const key of Object.keys(state.trials)){const old=saved.trials?.[key];if(!old)continue;
+          state.trials[key].total=Math.max(0,Math.min(state.trials[key].required,Number(old.total)||0));
+          state.trials[key].targetCount=Math.max(0,Math.min(state.trials[key].total,Number(old.targetCount)||0));
+          state.trials[key].predictedCategory=['Impossible','Less Likely','Equally Likely','More Likely','Certain'].includes(old.predictedCategory)?old.predictedCategory:null;
+          state.trials[key].completed=state.trials[key].total===state.trials[key].required;
+        }
+      }
+    }catch(e){}
+    refresh();
+  });
+})();
+</script>
+
+
+<script>
+(function(){
+ 'use strict';
+ const SAVE='carnival_quest_profile_v2', BOARD='carnival_quest_local_leaderboard_v2';
+ const titles={spinner:'Wheel Wizard',cans:'Can Crusher',basketball:'Hoop Hero',ring:'Ring Royalty'};
+ const em={spinner:'🎡',cans:'🎯',basketball:'🏀',ring:'⭕'};
+ const safe=(x)=>String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const read=(k,f)=>{try{return JSON.parse(localStorage.getItem(k))??f}catch(e){return f}};
+ const put=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+ const profile=read(SAVE,{player:'Probability Explorer'});
+ const current=()=>Object.values(state.trials);
+ function score(){
+   const done=current().filter(t=>t.completed).length;
+   const hits=current().reduce((n,t)=>n+t.targetCount,0);
+   const trials=current().reduce((n,t)=>n+t.total,0);
+   const stars=done*3 + Math.floor(hits/5);
+   const xp=trials*10+hits*7+done*100+state.prizesUnlocked.length*40;
+   return {done,hits,trials,stars,xp,level:Math.floor(xp/100)+1};
+ }
+ const achievementDefs=[
+  ['first','🎟️','First Steps','Make your first carnival trial',()=>score().trials>=1],
+  ['spin','🎡','Wheel Wizard','Complete 15 wheel spins',()=>state.trials.spinner.completed],
+  ['cans','🎯','Can Crusher','Finish 8 can throws',()=>state.trials.cans.completed],
+  ['hoops','🏀','Hoop Hero','Complete 12 basketball shots',()=>state.trials.basketball.completed],
+  ['rings','⭕','Ring Royalty','Complete 30 ring tosses',()=>state.trials.ring.completed],
+  ['grand','👑','Carnival Legend','Finish all four booths',()=>score().done===4],
+  ['shop','🎁','Prize Collector','Unlock a carnival prize',()=>state.prizesUnlocked.length>=1],
+  ['star','⭐','Rising Star','Earn 10 stars',()=>score().stars>=10],
+  ['trial','🔬','Probability Scientist','Perform 40 experiments',()=>score().trials>=40]
+ ];
+ function render(){
+  const s=score(), name=profile.player||'Probability Explorer';
+  document.getElementById('arcade-player').value=name;
+  document.getElementById('arcade-level').textContent='LEVEL '+s.level;
+  document.getElementById('arcade-rank').textContent=s.done===4?'👑 Carnival Legend':s.level>=8?'🎓 Probability Pro':s.level>=4?'🌟 Rising Mathematician':'🧭 Curious Explorer';
+  document.getElementById('arcade-xp-bar').style.width=(s.xp%100)+'%';
+  document.getElementById('arcade-xp-label').textContent=(s.xp%100)+' / 100 XP  ·  '+s.xp+' total';
+  document.getElementById('arcade-stars').textContent='⭐ '+s.stars+' Stars';
+  document.getElementById('quest-cards').innerHTML=Object.entries(titles).map(([k,label])=>{
+   const t=state.trials[k],ok=t.completed;
+   return '<button onclick="switchTab(\'hub\');openBooth(\''+k+'\')" class="quest-card '+(ok?'quest-done':'')+' text-left hover:brightness-125 transition" aria-label="Open '+label+'"><span class="text-xl">'+em[k]+'</span> <strong class="text-amber-200 text-xs">'+label+'</strong><div class="text-xs text-rose-100 mt-1">'+t.total+'/'+t.required+' attempts · '+(ok?'✅ Complete':'🎮 Play now')+'</div><div class="h-1.5 bg-black/40 rounded mt-2 overflow-hidden"><div class="h-full bg-amber-400" style="width:'+(100*t.total/t.required)+'%"></div></div></button>';
+  }).join('');
+  document.getElementById('achievement-grid').innerHTML=achievementDefs.map(([id,ico,name,desc,test])=>
+   '<div class="rounded-xl p-3 border '+(test()?'border-emerald-500 bg-emerald-950/50':'border-maroon-600 bg-maroon-950/70 opacity-65')+'"><span class="text-2xl">'+ico+'</span> <strong class="text-amber-200 text-sm">'+name+'</strong><p class="text-xs mt-1 text-rose-100">'+desc+'</p><p class="text-xs mt-2">'+(test()?'✅ Unlocked':'🔒 Locked')+'</p></div>'
+  ).join('');
+  renderBoard();
+ }
+ function renderBoard(){
+  const rows=read(BOARD,[]);
+  document.getElementById('leaderboard-rows').innerHTML=rows.length?rows.map((r,i)=>'<tr><td>'+(i+1)+'</td><td class="font-bold text-amber-100">'+safe(r.player)+'</td><td>'+r.xp+'</td><td>'+r.stars+'</td><td>'+r.done+'/4</td><td>'+safe(r.date)+'</td></tr>').join(''):'<tr><td colspan="6" class="text-rose-200">No scores yet. Play a booth, then add your score!</td></tr>';
+ }
+ window.arcadeSavePlayer=()=>{
+  const v=document.getElementById('arcade-player').value.trim().slice(0,26);
+  profile.player=v||'Probability Explorer'; put(SAVE,profile); render(); showToast('Player saved: '+profile.player,'win');
+ };
+ window.arcadeFullscreen=()=>{
+  if(document.fullscreenElement){document.exitFullscreen?.();return}
+  if(document.documentElement.requestFullscreen){document.documentElement.requestFullscreen().catch(()=>{document.body.classList.toggle('focus-mode')})}
+  else{document.body.classList.toggle('focus-mode');showToast('Focus display toggled','info')}
+ };
+ window.arcadeRecordScore=()=>{
+  const s=score();
+  if(!s.trials){showToast('Play at least one trial before saving your score!','info');return}
+  const rows=read(BOARD,[]);
+  rows.push({player:profile.player||'Probability Explorer',xp:s.xp,stars:s.stars,done:s.done,date:new Date().toLocaleDateString()});
+  rows.sort((a,b)=>b.xp-a.xp||b.stars-a.stars);
+  put(BOARD,rows.slice(0,20)); renderBoard();
+  try{playSound('win')}catch(e){}
+  showToast('Score added to the Hall of Legends!','win');
+ };
+ window.arcadeClearScores=()=>{
+  if(!confirm('Clear this device’s local leaderboard?'))return;
+  put(BOARD,[]);renderBoard();showToast('Leaderboard cleared','info');
+ };
+ function extendUI(){
+  const nav=document.querySelector('nav');
+  if(nav&&!document.getElementById('nav-leaderboard')){
+   const b=document.createElement('button'); b.id='nav-leaderboard'; b.className='tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-200 hover:text-white hover:bg-maroon-800 transition-all';
+   b.textContent='🏅 Leaderboard'; b.onclick=()=>switchTab('leaderboard');nav.appendChild(b);
+  }
+ }
+ const originalTab=window.switchTab;
+ window.switchTab=function(id){
+  if(id==='leaderboard'){
+   for(const k of ['hub','analytics','shop','codex','guide','leaderboard'])document.getElementById('tab-'+k)?.classList.add('hidden');
+   document.getElementById('tab-leaderboard').classList.remove('hidden');
+   for(const b of document.querySelectorAll('.tab-btn'))b.className='tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-200 hover:text-white hover:bg-maroon-800 transition-all';
+   const n=document.getElementById('nav-leaderboard');n.className='tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-carnival-gold text-maroon-900 shadow';
+   render();window.scrollTo({top:0,behavior:'smooth'});return;
+  }
+  document.getElementById('tab-leaderboard').classList.add('hidden');
+  if(document.getElementById('nav-leaderboard'))document.getElementById('nav-leaderboard').className='tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-200 hover:text-white hover:bg-maroon-800 transition-all';
+  originalTab(id);
+ };
+ const originalStats=window.updateGlobalStats;
+ window.updateGlobalStats=function(){originalStats();render()};
+ const originalTickets=window.addTickets;
+ window.addTickets=function(n){originalTickets(n);render()};
+ const originalOpen=window.openBooth;
+ window.openBooth=function(k){originalOpen(k);render()};
+ const originalReset=window.resetBoothData;
+ window.resetBoothData=function(k){originalReset(k);render()};
+ const originalBuy=window.buyPrize;
+ window.buyPrize=function(id){originalBuy(id);render()};
+ window.addEventListener('load',()=>{extendUI();render()});
+})();
+</script>
+
+
+<style>
+#language-switcher{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;border:2px solid #fcd34d;border-radius:12px;background:#fff8e7;color:#3a040e;font-weight:900;font-size:12px;padding:9px 12px;cursor:pointer;box-shadow:0 3px 12px #0005}
+#language-switcher:hover,#language-switcher:focus-visible{background:#fcd34d;outline:2px solid #fff}
+</style>
+<script>
+/* Instant English / Bahasa Melayu switch. Preserves the game state and player's work. */
+(function(){
+'use strict';
+const terms = {"Carnival Probability Arcade": "Arked Kebarangkalian Karnival", "Interactive Mini-Games & Qualitative Likelihood Codex": "Permainan Mini Interaktif & Panduan Kebolehjadian", "Arcade": "Arked", "Data Dashboard": "Papan Pemuka Data", "Prize Shop": "Kedai Hadiah", "AI Codex": "Panduan AI", "Guide": "Panduan", "Tickets": "Tiket", "The Grand Math Carnival · Classroom Edition": "Karnival Matematik Hebat · Edisi Bilik Darjah", "The Probability Quest": "Misi Kebarangkalian", "Predict the odds. Play the booths. Earn stars. Become a Carnival Legend!": "Ramalkan kebarangkalian. Main di gerai. Kumpul bintang. Jadi legenda karnival!", "Player:": "Pemain:", "Save Player": "Simpan Pemain", "Full screen": "Skrin penuh", "LEVEL": "TAHAP", "Curious Explorer": "Penjelajah Ingin Tahu", "Stars": "Bintang", "Star": "Bintang", "Year 6 Interactive Math Lab": "Makmal Matematik Interaktif Tahun 6", "Welcome to the Probability Arcade!": "Selamat Datang ke Arked Kebarangkalian!", "Read the situation statement, select your likelihood prediction, and launch into interactive physics mini-games to collect carnival tickets and earn your Award Certificate!": "Baca situasi, pilih ramalan kebolehjadian, kemudian main permainan mini interaktif untuk mengumpul tiket karnival dan memperoleh sijil pencapaian!", "Total Trials": "Jumlah Percubaan", "Booths Done": "Gerai Selesai", "Prizes Won": "Hadiah Diperoleh", "5 Qualitative Likelihood Levels:": "5 Tahap Kebolehjadian Kualitatif:", "Impossible": "Mustahil", "Less Likely": "Kurang Berkemungkinan", "Equally Likely": "Sama Kemungkinan", "More Likely": "Lebih Berkemungkinan", "Certain": "Pasti", "Spin to Win": "Putar untuk Menang", "Can Knockdown": "Jatuhkan Tin", "Basketball Shootout": "Jaringan Bola Keranjang", "Ring-a-Bottle": "Lontar Gelang ke Botol", "15 Interactive Spins • Win Sector Target": "15 Putaran Interaktif • Sasaran Petak Menang", "8 Drag Throws • Physics Aiming": "8 Balingan Tarik • Sasaran Fizik", "12 Shots • Arc & Timing Control": "12 Jaringan • Kawalan Sudut & Masa", "30 Ring Tosses • Aim Reticle & Wind": "30 Lontaran Gelang • Sasaran & Angin", "PLAY GAME": "MULA MAIN", "Exit Booth": "Keluar Gerai", "Hall of Carnival Legends": "Dewan Legenda Karnival", "Finish trials to climb the rankings. Leaderboard entries are saved only in this browser on this device.": "Selesaikan percubaan untuk menaikkan kedudukan. Rekod disimpan hanya pada pelayar peranti ini.", "Add my score to leaderboard": "Tambah skor saya ke papan kedudukan", "Clear leaderboard": "Kosongkan papan kedudukan", "Rank": "Kedudukan", "Player": "Pemain", "Completed Booths": "Gerai Selesai", "Date": "Tarikh", "Achievement Showcase": "Pameran Pencapaian", "Experimental Probability vs Prediction Ledger": "Rekod Kebarangkalian Eksperimen dan Ramalan", "Review live trial data and compare qualitative expectations against real experimental frequencies.": "Semak data percubaan dan bandingkan ramalan dengan kekerapan hasil eksperimen.", "Reset All Data": "Set Semula Semua Data", "Carnival Booth": "Gerai Karnival", "Target Event": "Peristiwa Sasaran", "Target Hits": "Bilangan Berjaya", "Trials Done": "Percubaan Dilakukan", "Your Prediction": "Ramalan Anda", "Experimental Likelihood": "Kebolehjadian Eksperimen", "Analysis Outcome": "Hasil Analisis", "Carnival Prize Shop": "Kedai Hadiah Karnival", "Spend your earned carnival tickets to unlock awesome prizes and trophies!": "Gunakan tiket karnival untuk membuka hadiah dan trofi menarik!", "Probability Prompt Codex": "Panduan Tugasan Kebarangkalian", "Generate custom Year 6 probability worksheets and discussion tasks with AI.": "Hasilkan lembaran kerja kebarangkalian Tahun 6 dan aktiviti perbincangan.", "Codex Settings": "Tetapan Aktiviti", "Target Grade Level": "Peringkat Tahun / Gred", "Year 6 (Qualitative Likelihood Focus)": "Tahun 6 (Fokus Kebolehjadian Kualitatif)", "Grade 7-8 (Experimental vs Theoretical)": "Gred 7–8 (Eksperimen dan Teori)", "Carnival Game Theme": "Tema Permainan Karnival", "All Mini-Games Mixed": "Gabungan Semua Permainan Mini", "Wheel Spin Game": "Permainan Roda Putar", "Can Knockdown Game": "Permainan Jatuhkan Tin", "Basketball Shootout Game": "Permainan Bola Keranjang", "Ring Toss Game": "Permainan Lontar Gelang", "Output Type": "Jenis Hasil", "5-Level Qualitative Worksheet": "Lembaran Kerja 5 Tahap Kebolehjadian", "Class Discussion Questions": "Soalan Perbincangan Kelas", "Custom Context": "Konteks Tambahan", "Generate Teaching Artifact": "Hasilkan Bahan Pengajaran", "Generated Teaching Content": "Bahan Pengajaran Dihasilkan", "Copy Text": "Salin Teks", "Select options on the left and click \"Generate Teaching Artifact\".": "Pilih tetapan di sebelah kiri dan tekan \"Hasilkan Bahan Pengajaran\".", "Processing response...": "Sedang memproses...", "Teacher Guide & Curriculum Mapping": "Panduan Guru & Pemetaan Kurikulum", "This interactive arcade allows students to formulate qualitative likelihood predictions prior to engaging in physical/simulated trial games.": "Arked interaktif ini membantu murid membuat ramalan kebolehjadian sebelum mencuba permainan simulasi.", "Key Learning Outcomes": "Hasil Pembelajaran Utama", "Classroom Instructions": "Arahan Bilik Darjah", "Assign qualitative values (Impossible to Certain) to events.": "Kenal pasti tahap kebolehjadian peristiwa (Mustahil hingga Pasti).", "Compare initial predictions with experimental frequencies.": "Bandingkan ramalan awal dengan kekerapan eksperimen.", "Understand how sample sizes (trial counts) affect experimental outcomes.": "Fahami bagaimana bilangan percubaan mempengaruhi hasil eksperimen.", "Pick a booth and read the Situation Statement.": "Pilih gerai dan baca penyataan situasi.", "Select a Qualitative Prediction from the 5 scale buttons.": "Pilih ramalan kebolehjadian daripada lima pilihan.", "Play the interactive game to execute required trial attempts.": "Main permainan interaktif mengikut bilangan percubaan ditetapkan.", "Review your certificate and analytical table!": "Semak sijil dan jadual analisis anda!", "Math Carnival Honors": "Anugerah Karnival Matematik", "Probability Master Award": "Anugerah Pakar Kebarangkalian", "Year 6 Qualitative Likelihood Experiment": "Eksperimen Kebolehjadian Kualitatif Tahun 6", "This certificate is awarded to": "Sijil ini dianugerahkan kepada", "(Click to edit student name)": "(Tekan untuk mengubah nama murid)", "Game Booth": "Gerai Permainan", "Spin Wheel": "Roda Putar", "Trial Outcome": "Hasil Percubaan", "Arcade Master": "Juara Arked", "Carnival Math Trail": "Jejak Matematik Karnival", "Year 6 Mathematics": "Matematik Tahun 6", "Probability Module": "Modul Kebarangkalian", "Print Certificate": "Cetak Sijil", "Replay Booth": "Main Semula Gerai", "Close": "Tutup", "Carnival Math Trail • Year 6 Experimental Probability & Game Arcade": "Jejak Matematik Karnival • Kebarangkalian Eksperimen Tahun 6 & Arked Permainan", "STEP 1: PREDICTION": "LANGKAH 1: RAMALAN", "Prediction Locked:": "Ramalan Dikunci:", "Now play the game!": "Sekarang main permainan!", "Select a qualitative prediction above to start playing!": "Pilih ramalan kebolehjadian di atas untuk mula bermain!", "Situation:": "Situasi:", "8 Sector Wheel": "Roda 8 Petak", "The wheel contains 3 WIN sectors and 5 LOSS sectors. Over 15 spins, what is the qualitative likelihood of landing on a WIN sector?": "Roda mempunyai 3 petak MENANG dan 5 petak KALAH. Dalam 15 putaran, apakah kebolehjadian mendarat di petak MENANG?", "You get 8 physical throws at a pyramid stack of cans. What is the qualitative likelihood of knocking down the cans?": "Anda mempunyai 8 balingan ke arah susunan tin. Apakah kebolehjadian menjatuhkan tin?", "You will take 12 basketball shot attempts toward the basket hoop. What is the qualitative likelihood of scoring a basket?": "Anda akan membuat 12 percubaan jaringan. Apakah kebolehjadian menjaringkan bola?", "You have 30 rings to toss over bottle necks. What is the qualitative likelihood of ringing a bottle?": "Anda mempunyai 30 gelang untuk dilontar ke leher botol. Apakah kebolehjadian gelang masuk ke botol?", "Spins Taken": "Putaran Dibuat", "Wins Landed": "Bilangan Menang", "Current Level": "Tahap Semasa", "SPIN THE WHEEL": "PUTAR RODA", "BOOTH COMPLETED": "GERAI SELESAI", "Reset Game": "Set Semula Permainan", "Reset": "Set Semula", "Throws": "Balingan", "Hits": "Kena Sasaran", "Drag back ball & release to throw!": "Tarik bola ke belakang dan lepaskan untuk membaling!", "Shots Taken": "Cubaan Jaringan", "Baskets Made": "Jaringan Berjaya", "SHOOT BASKETBALL": "BALING BOLA KERANJANG", "Tosses Done": "Lontaran Dibuat", "Rings Placed": "Gelang Masuk", "TOSS 1 RING": "LONTAR 1 GELANG", "FAST TOSS (5 RINGS)": "LONTAR PANTAS (5 GELANG)", "Not Tested Yet": "Belum Diuji", "Not Tested": "Belum Diuji", "Win Sector Landed": "Mendarat di Petak Menang", "Can Stack Hit": "Tin Dikenai", "Basket Swished": "Jaringan Berjaya", "Bottle Ringed": "Gelang Masuk Botol", "Cost:": "Harga:", "UNLOCKED": "TELAH DIBUKA", "CLAIM PRIZE": "TEBUS HADIAH", "NEED MORE TICKETS": "TIKET TIDAK MENCUKUPI", "Carnival Teddy Bear": "Beruang Teddy Karnival", "Ringmaster Hat": "Topi Pengacara Karnival", "Festive Balloon Dog": "Belon Anjing Karnival", "Golden Math Trophy": "Trofi Emas Matematik", "Prediction": "Ramalan", "Completed": "Selesai", "In Progress": "Sedang Berjalan", "Congratulations!": "Tahniah!", "Try again!": "Cuba lagi!", "None": "Tiada", "WINNER!": "MENANG!", "Landed on Win sector": "Mendarat di petak Menang", "Landed on Loss sector. Try again!": "Mendarat di petak Kalah. Cuba lagi!", "CAN KNOCKDOWN HIT!": "TIN BERJAYA DIJATUHKAN!", "Missed the cans! Try aiming higher.": "Tidak mengenai tin! Cuba sasar lebih tinggi.", "SWOOSH! Basket Scored!": "MASUK! Jaringan Berjaya!", "Rim miss! Adjust shot timing.": "Tidak masuk! Laraskan masa balingan.", "Ring Toss Success!": "Lontaran Gelang Berjaya!", "Rings bounced off bottle necks!": "Gelang terlantun daripada leher botol!", "Audio Muted": "Bunyi Dimatikan", "Audio Enabled": "Bunyi Dihidupkan"};
+const exact = new Map(Object.entries(terms));
+const replacements = Object.entries(terms).filter(([a])=>a.length>5).sort((a,b)=>b[0].length-a[0].length);
+const originals = new WeakMap(), originalAttrs = new WeakMap();
+let language='en', observer, updating=false;
+function translate(value){
+  if(exact.has(value)) return exact.get(value);
+  let result=value;
+  for(const [en,ms] of replacements){
+    if(result.includes(en)) result=result.split(en).join(ms);
+  }
+  // Replace stand-alone likelihood labels in numerical results.
+  for(const en of ['Impossible','Less Likely','Equally Likely','More Likely','Certain']){
+    const boundary=new RegExp('(^|[^A-Za-z])'+en+'(?=$|[^A-Za-z])','g');
+    result=result.replace(boundary,(_,before)=>before+terms[en]);
+  }
+  return result;
+}
+const excluded = el => !!(el && el.closest('script,style,textarea,[contenteditable="true"],[data-no-translate]'));
+function walk(root){
+  if(root.nodeType===Node.TEXT_NODE){
+    if(excluded(root.parentElement))return;
+    let base=originals.get(root);
+    if(base===undefined){base=root.nodeValue; originals.set(root,base)}
+    const next=language==='ms'?translate(base):base;
+    if(root.nodeValue!==next)root.nodeValue=next;
+    return;
+  }
+  if(root.nodeType!==Node.ELEMENT_NODE)return;
+  if(excluded(root))return;
+  let attrs=originalAttrs.get(root);
+  if(!attrs){attrs={};originalAttrs.set(root,attrs)}
+  for(const attr of ['title','placeholder','aria-label']){
+    if(root.hasAttribute(attr)){
+      if(!(attr in attrs))attrs[attr]=root.getAttribute(attr);
+      const next=language==='ms'?translate(attrs[attr]):attrs[attr];
+      if(root.getAttribute(attr)!==next)root.setAttribute(attr,next);
+    }
+  }
+  for(const child of Array.from(root.childNodes))walk(child);
+}
+function apply(){
+  if(observer)observer.disconnect();
+  updating=true;
+  walk(document.body);
+  document.documentElement.lang=language==='ms'?'ms':'en';
+  const button=document.getElementById('language-switcher');
+  if(button){
+    button.textContent=language==='en'?'🌐 ENGLISH ⇄ BAHASA MELAYU':'🌐 BAHASA MELAYU ⇄ ENGLISH';
+    button.title=language==='en'?'Tukar ke Bahasa Melayu':'Switch to English';
+    button.setAttribute('aria-label',button.title);
+    button.setAttribute('aria-pressed',String(language==='ms'));
+  }
+  updating=false;
+  if(observer)observer.observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['title','placeholder','aria-label']});
+}
+function init(){
+ const audio=document.getElementById('audio-toggle-btn');
+ const button=document.createElement('button');
+ button.type='button';button.id='language-switcher';
+ button.className='no-print';
+ button.setAttribute('data-no-translate','');
+ if(audio && audio.parentNode)audio.parentNode.insertBefore(button,audio);
+ else document.querySelector('header')?.appendChild(button);
+ try{language=localStorage.getItem('carnival_language')==='ms'?'ms':'en'}catch(e){}
+ button.addEventListener('click',()=>{
+   language=language==='en'?'ms':'en';
+   try{localStorage.setItem('carnival_language',language)}catch(e){}
+   apply();
+ });
+ observer=new MutationObserver(mutations=>{
+  if(updating)return;
+  // Newly rendered booth, certificate, analytics and other dynamic text.
+  for(const m of mutations){
+   if(m.type==='characterData'){
+    const t=m.target;
+    const before=originals.get(t);
+    if(before===undefined || (t.nodeValue!==before && t.nodeValue!==translate(before)))originals.set(t,t.nodeValue);
+   }else if(m.type==='attributes'){
+    const attrs=originalAttrs.get(m.target)||{};
+    const a=m.attributeName;
+    const now=m.target.getAttribute(a);
+    if(!(a in attrs)|| (now!==attrs[a]&&now!==translate(attrs[a]))) {
+      attrs[a]=now;originalAttrs.set(m.target,attrs);
+    }
+   }
+  }
+  apply();
+ });
+ apply();
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
+
+
+<style>
+.learning-explanation {margin:14px 0;padding:16px;border:2px solid #d6a635;border-radius:16px;background:#fffbeb;color:#422006;text-align:left;font-size:13px;line-height:1.6}
+.learning-explanation h3{font-weight:900;font-size:16px;margin:0 0 8px;color:#7c2d12}
+.learning-explanation p{margin:7px 0}
+
+html[lang="en"] .learn-ms,html[lang="ms"] .learn-en{display:none!important}
+.learning-explanation .tip{border-left:3px solid #d97706;padding-left:9px}
+@media print {.learning-explanation{break-inside:avoid}}
+.booth-learning-panel{max-width:650px;margin:20px auto 4px!important;padding:20px!important;
+ box-shadow:0 8px 30px rgba(0,0,0,.28);scroll-margin-top:110px}
+.booth-learning-panel .explanation-header{font-size:19px;font-weight:900;margin-bottom:12px;color:#7c2d12}
+.booth-learning-panel p{font-size:14px;line-height:1.8;margin:12px 0}
+.booth-summary-actions{display:flex;justify-content:center;margin-top:14px}
+</style>
+<script>
+/* Bilingual evidence-based result explanations: success/failure are based on observed
+   frequencies, not on whether the student should have known the random outcome. */
+(function(){
+'use strict';
+const levelEN=['Impossible','Less Likely','Equally Likely','More Likely','Certain'];
+const levelMS=['Mustahil','Kurang Berkemungkinan','Sama Kemungkinan','Lebih Berkemungkinan','Pasti'];
+const cat = (wins,n)=>{
+ if(!n)return 0;
+ const p=wins/n;
+ return p===0?0:p<0.5?1:p===0.5?2:p<1?3:4;
+};
+function explanation(key, targetPanel){
+ const d=state.trials[key];
+ if(!d||!d.total)return;
+ const hits=d.targetCount, tries=d.total, fraction=hits/tries;
+ const idx=cat(hits,tries), predicted=d.predictedCategory;
+ const matched=predicted===levelEN[idx];
+ const predMS=levelMS[levelEN.indexOf(predicted)]||'belum dipilih';
+ const percentage=Math.round(fraction*100);
+ const categoryReasonEN=[
+   'none of the attempts succeeded, so the event was not observed during this round',
+   'fewer than half of the attempts succeeded, so success happened less often than failure',
+   'exactly half of the attempts succeeded, so success and failure happened equally often',
+   'more than half of the attempts succeeded, so success happened more often than failure',
+   'every attempt succeeded during this round'
+ ][idx];
+ const categoryReasonMS=[
+   'tiada percubaan yang berjaya, jadi kejayaan tidak berlaku dalam pusingan ini',
+   'kurang daripada separuh percubaan berjaya, jadi kejayaan berlaku lebih jarang daripada kegagalan',
+   'tepat separuh percubaan berjaya, jadi kejayaan dan kegagalan berlaku sama kerap',
+   'lebih daripada separuh percubaan berjaya, jadi kejayaan berlaku lebih kerap daripada kegagalan',
+   'semua percubaan berjaya dalam pusingan ini'
+ ][idx];
+ const actionEN={spinner:'spins',cans:'throws',basketball:'shots',ring:'tosses'}[key];
+ const actionMS={spinner:'putaran',cans:'balingan',basketball:'percubaan menjaring',ring:'lontaran'}[key];
+ const openingEN=matched?
+   `Good thinking! Your prediction of “${predicted}” matches what happened in this round.`:
+   `Your prediction of “${predicted||'not selected'}” was different from what happened in this round, and that is okay. A prediction is a thoughtful guess that we test by playing.`;
+ const openingMS=matched?
+   `Bagus! Ramalan anda, iaitu “${predMS}”, sepadan dengan keputusan pusingan ini.`:
+   `Ramalan anda, iaitu “${predMS}”, berbeza daripada keputusan pusingan ini, dan itu tidak mengapa. Ramalan ialah jangkaan yang kita uji melalui permainan.`;
+ const resultEN=`You succeeded ${hits} times in ${tries} ${actionEN}. This means that ${categoryReasonEN}. That is why the experimental result is described as “${levelEN[idx]}”.`;
+ const resultMS=`Anda berjaya sebanyak ${hits} kali daripada ${tries} ${actionMS}. Ini bermaksud ${categoryReasonMS}. Oleh itu, keputusan eksperimen ini digambarkan sebagai “${levelMS[idx]}”.`;
+ const noteEN=key==='spinner'?
+   'The wheel has three winning spaces and five losing spaces of equal size. Before spinning, a win is less likely because there are fewer winning spaces than losing spaces. The result of a small number of spins can still differ from that expectation by chance.':
+   'This game involves skill, so your aim, timing, and practice can change how often you succeed. Your result describes what happened during these attempts, not a fixed chance for every player.';
+ const noteMS=key==='spinner'?
+   'Roda ini mempunyai tiga petak menang dan lima petak kalah yang sama besar. Sebelum memutar roda, menang adalah kurang berkemungkinan kerana bilangan petak menang lebih sedikit daripada petak kalah. Namun begitu, keputusan beberapa putaran boleh berbeza daripada jangkaan kerana faktor rawak.':
+   'Permainan ini melibatkan kemahiran, jadi cara anda menyasar, masa dan latihan boleh mengubah kekerapan anda berjaya. Keputusan anda menerangkan apa yang berlaku dalam percubaan ini, bukannya peluang tetap bagi semua pemain.';
+ const cautionEN=hits===0?
+   'Although you did not succeed this time, that does not mean success is impossible in the future.':
+   hits===tries?
+   'Although every attempt succeeded this time, that does not mean success is certain next time.':
+   'If you play again, you may get a different result, and that is part of learning from experiments.';
+ const cautionMS=hits===0?
+   'Walaupun anda belum berjaya kali ini, ini tidak bermaksud kejayaan mustahil pada masa hadapan.':
+   hits===tries?
+   'Walaupun semua percubaan berjaya kali ini, ini tidak bermaksud kejayaan pasti berlaku pada masa akan datang.':
+   'Jika anda bermain sekali lagi, anda mungkin mendapat keputusan yang berbeza. Itulah sebahagian daripada pembelajaran melalui eksperimen.';
+ const panel=targetPanel || document.getElementById('learning-explanation');
+ if(!panel)return;
+ function showParagraphs(selector, paragraphs){
+   const parent=panel.querySelector(selector);
+   parent.replaceChildren();
+   for(const paragraph of paragraphs){
+     const p=document.createElement('p');
+     p.textContent=paragraph;
+     parent.append(p);
+   }
+ }
+ showParagraphs('.explanation-content-en',[openingEN+' '+resultEN,noteEN+' '+cautionEN]);
+ showParagraphs('.explanation-content-ms',[openingMS+' '+resultMS,noteMS+' '+cautionMS]);
+}
+function init(){
+ const stats=document.getElementById('cert-stats-box');
+ if(!stats)return;
+ const outer=document.createElement('section');
+ outer.id='learning-explanation';
+ outer.className='learning-explanation';
+ outer.setAttribute('data-no-translate','');
+ outer.setAttribute('aria-live','polite');
+ outer.innerHTML='<div class="learn-en explanation-content-en" lang="en"></div><div class="learn-ms explanation-content-ms" lang="ms"></div>';
+ stats.insertAdjacentElement('afterend',outer);
+ window.renderBoothExplanation=function(key){
+   const data=state.trials[key];
+   const arena=document.getElementById('booth-content-area');
+   if(!arena || !data || data.total < data.required || state.activeBooth!==key)return;
+   arena.querySelectorAll('.booth-learning-panel').forEach(el=>el.remove());
+   const section=document.createElement('section');
+   section.className='booth-learning-panel learning-explanation';
+   section.setAttribute('data-no-translate','');
+   section.setAttribute('aria-live','polite');
+   section.innerHTML=`<div class="explanation-header">
+      <span class="learn-en" lang="en">📖 Your Game Explanation</span>
+      <span class="learn-ms" lang="ms">📖 Penerangan Permainan Anda</span>
+      </div>
+      <div class="learn-en explanation-content-en" lang="en"></div><div class="learn-ms explanation-content-ms" lang="ms"></div>
+      <div class="booth-summary-actions">
+         <button type="button" id="view-certificate" class="game-pill">
+           <span class="learn-en">🏆 View Certificate</span><span class="learn-ms">🏆 Lihat Sijil</span>
+         </button>
+      </div>`;
+   arena.append(section);
+   explanation(key,section);
+   section.querySelector('#view-certificate').addEventListener('click',()=>showCertificate(key));
+ };
+ const originalOpenBooth=window.openBooth;
+ window.openBooth=function(key){
+   originalOpenBooth(key);
+   window.renderBoothExplanation(key);
+ };
+ const original=window.showCertificate;
+ window.showCertificate=function(key){
+   original(key);
+   explanation(key);
+   if(window.renderBoothExplanation)window.renderBoothExplanation(key);
+ };
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
+
+</body>
+</html>
